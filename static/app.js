@@ -43,12 +43,25 @@ document.addEventListener('DOMContentLoaded', function () {
         loading.style.display = 'block';
         resultContainer.style.opacity = '0.5';
 
-        fetch('/api/debug', {
+        // Try both possible debug endpoint paths
+        fetch('/api/DebugEndpoint', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         })
+            .then(response => {
+                if (!response.ok) {
+                    console.log('First debug path failed, trying alternative path');
+                    return fetch('/api/debug', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                }
+                return response;
+            })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Debug endpoint error: ${response.status} ${response.statusText}`);
@@ -70,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="alert alert-danger mb-0">
                     <div class="h5">Debug Error</div>
                     <p>${error.message}</p>
+                    <p>Check Azure Function logs for more details.</p>
                 </div>
             `;
                 console.error('Debug Error:', error);
