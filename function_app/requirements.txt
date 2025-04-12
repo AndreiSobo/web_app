@@ -2,3 +2,5 @@ azure-functions
 azure-identity
 azure-mgmt-containerinstance
 requests
+azure-core
+azure-common
