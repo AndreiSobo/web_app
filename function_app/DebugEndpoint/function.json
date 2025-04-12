@@ -11,7 +11,7 @@
                 "post",
                 "options"
             ],
-            "route": "debug"
+            "route": null
         },
         {
             "type": "http",

@@ -7,9 +7,10 @@
             "direction": "in",
             "name": "req",
             "methods": [
-                "post"
+                "post",
+                "options"
             ],
-            "route": "ClassifyPenguin"
+            "route": null
         },
         {
             "type": "http",
