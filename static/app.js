@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(`HTTP error!!11 Status: ${response.status}`);
                 }
                 return response.json();
             })
