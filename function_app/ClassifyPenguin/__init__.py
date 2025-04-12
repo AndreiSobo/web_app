@@ -2,6 +2,7 @@ import logging
 import azure.functions as func
 import json
 import os
+import traceback
 import requests
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
@@ -13,18 +14,78 @@ from azure.mgmt.containerinstance.models import (
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-
+    
+    # Add CORS headers
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With"
+    }
+    
+    # Handle OPTIONS request for CORS preflight
+    if req.method == "OPTIONS":
+        return func.HttpResponse(
+            status_code=204,
+            headers=headers
+        )
+    
     try:
+        # Log request details for debugging
+        logging.info(f"Request method: {req.method}")
+        logging.info(f"Request URL: {req.url}")
+        logging.info(f"Request headers: {dict(req.headers)}")
+        
         # Get request body
-        req_body = req.get_json()
+        try:
+            req_body = req.get_json()
+            logging.info(f"Request body: {req_body}")
+        except ValueError:
+            logging.warning("Request body is not valid JSON or is empty")
+            return func.HttpResponse(
+                json.dumps({"error": "Request body must be valid JSON"}),
+                status_code=400,
+                headers=headers,
+                mimetype="application/json"
+            )
         
         # Extract penguin features
         features = req_body.get('features', [])
         
         if not features or len(features) != 4:
+            logging.warning(f"Invalid features: {features}")
             return func.HttpResponse(
                 json.dumps({"error": "Invalid or missing features. Expected 4 features: CulmenLength, CulmenDepth, FlipperLength, BodyMass"}),
                 status_code=400,
+                headers=headers,
+                mimetype="application/json"
+            )
+        
+        # Log environment variables for debugging (masking sensitive values)
+        env_vars = {
+            "AZURE_SUBSCRIPTION_ID": os.environ.get("AZURE_SUBSCRIPTION_ID", "Not set"),
+            "AZURE_RESOURCE_GROUP": os.environ.get("AZURE_RESOURCE_GROUP", "Not set"),
+            "CONTAINER_IMAGE": os.environ.get("CONTAINER_IMAGE", "Not set"),
+            "REGISTRY_SERVER": os.environ.get("REGISTRY_SERVER", "Not set"),
+            "REGISTRY_USERNAME": "******" if os.environ.get("REGISTRY_USERNAME") else "Not set",
+            "REGISTRY_PASSWORD": "******" if os.environ.get("REGISTRY_PASSWORD") else "Not set",
+        }
+        logging.info(f"Environment variables: {env_vars}")
+        
+        # For quick testing without container, return sample response
+        if os.environ.get("BYPASS_CONTAINER", "false").lower() == "true":
+            logging.info("Bypassing container and returning sample response")
+            sample_response = {
+                "prediction": 1,
+                "class": "Chinstrap",
+                "species_name": "Chinstrap",
+                "confidence": 0.92,
+                "features": features,
+                "note": "This is a sample response, container was bypassed"
+            }
+            return func.HttpResponse(
+                json.dumps(sample_response),
+                status_code=200,
+                headers=headers,
                 mimetype="application/json"
             )
         
@@ -35,14 +96,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(
             json.dumps(result),
             status_code=200,
+            headers=headers,
             mimetype="application/json"
         )
         
     except Exception as e:
-        logging.error(f"Error processing request: {str(e)}")
+        error_details = traceback.format_exc()
+        logging.error(f"Error processing request: {str(e)}\n{error_details}")
         return func.HttpResponse(
-            json.dumps({"error": str(e)}),
+            json.dumps({
+                "error": str(e),
+                "details": error_details if os.environ.get("INCLUDE_ERROR_DETAILS", "false").lower() == "true" else "Enable INCLUDE_ERROR_DETAILS in function settings for more information"
+            }),
             status_code=500,
+            headers=headers,
             mimetype="application/json"
         )
 
@@ -56,6 +123,10 @@ def process_with_container(features):
     registry_username = os.environ.get("REGISTRY_USERNAME")
     registry_password = os.environ.get("REGISTRY_PASSWORD")
     
+    # Log container setup
+    logging.info(f"Setting up container: {container_group_name}")
+    logging.info(f"Using image: {container_image}")
+    
     # Prepare environment variables for the container
     env_vars = [
         EnvironmentVariable(name="MODEL_PATH", value="/app/models/penguins_model.pkl"),
@@ -64,7 +135,10 @@ def process_with_container(features):
     
     try:
         # Initialize the Container Instance client
+        logging.info("Initializing DefaultAzureCredential")
         credential = DefaultAzureCredential()
+        
+        logging.info("Initializing ContainerInstanceManagementClient")
         client = ContainerInstanceManagementClient(credential, subscription_id)
         
         # Define container group
@@ -157,5 +231,6 @@ def process_with_container(features):
         return result
         
     except Exception as e:
-        logging.error(f"Error in container processing: {str(e)}")
+        error_details = traceback.format_exc()
+        logging.error(f"Error in container processing: {str(e)}\n{error_details}")
         raise
