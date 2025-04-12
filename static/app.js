@@ -32,14 +32,28 @@ document.addEventListener('DOMContentLoaded', function () {
             ]
         };
 
-        // Send to Azure Function
-        fetch('/classify', {
+        // Try different API endpoints - first try /api/ClassifyPenguin directly
+        fetch('/api/ClassifyPenguin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         })
+            .then(response => {
+                if (!response.ok) {
+                    console.log(`First endpoint failed with status: ${response.status}`);
+                    // If first endpoint fails, try the /classify endpoint as fallback
+                    return fetch('/classify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
+                return response;
+            })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error!!11 Status: ${response.status}`);

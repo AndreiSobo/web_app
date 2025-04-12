@@ -41,7 +41,7 @@ Configure these application settings in your Azure Function:
 ```
 AZURE_SUBSCRIPTION_ID=your-subscription-id
 AZURE_RESOURCE_GROUP=your-resource-group
-AZURE_LOCATION=eastus
+AZURE_LOCATION= North Europe
 CONTAINER_IMAGE=your-registry.azurecr.io/penguin-classifier:latest
 REGISTRY_SERVER=your-registry.azurecr.io
 REGISTRY_USERNAME=your-username
