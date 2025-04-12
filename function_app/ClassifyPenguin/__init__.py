@@ -14,7 +14,7 @@ from azure.mgmt.containerinstance.models import (
 )
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    """Process request using Azure Container Instances with incremental checks"""
+    """Process request using Azure Container Instances with the penguin-classifier container"""
     logging.info('ClassifyPenguin function processed a request.')
     
     # Add CORS headers for all responses
@@ -75,19 +75,33 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 mimetype="application/json"
             )
         
+        # Set default values for Azure Container Registry - these should be overridden by environment variables
+        default_registry = "containerregistry2025.azurecr.io"
+        default_image = f"{default_registry}/penguin-classifier:latest"
+        
+        # Get values from environment with defaults
+        subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID")
+        resource_group = os.environ.get("AZURE_RESOURCE_GROUP")
+        location = os.environ.get("AZURE_LOCATION", "eastus")
+        container_image = os.environ.get("CONTAINER_IMAGE", default_image)
+        registry_server = os.environ.get("REGISTRY_SERVER", default_registry)
+        registry_username = os.environ.get("REGISTRY_USERNAME")
+        registry_password = os.environ.get("REGISTRY_PASSWORD")
+        
         # Check required environment variables
         required_vars = [
             "AZURE_SUBSCRIPTION_ID",
             "AZURE_RESOURCE_GROUP", 
-            "AZURE_LOCATION",
-            "CONTAINER_IMAGE", 
-            "REGISTRY_SERVER", 
             "REGISTRY_USERNAME",
             "REGISTRY_PASSWORD"
         ]
         
         missing_vars = []
-        env_values = {}
+        env_values = {
+            "AZURE_LOCATION": location,
+            "CONTAINER_IMAGE": container_image,
+            "REGISTRY_SERVER": registry_server
+        }
         
         for var in required_vars:
             value = os.environ.get(var)
@@ -100,12 +114,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 else:
                     env_values[var] = value
         
-        # Initialize response with environment check results
+        # Initialize response
         response = {
             "success": True,
-            "prediction": 1,
-            "species_name": "Chinstrap",
-            "confidence": 0.92,
             "features": features,
             "environment_check": {
                 "all_vars_present": len(missing_vars) == 0,
@@ -117,7 +128,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         # If environment variables are missing, return now
         if missing_vars:
-            response["message"] = "Missing required environment variables"
+            response["message"] = f"Missing required environment variables: {', '.join(missing_vars)}"
             response["success"] = False
             return func.HttpResponse(
                 json.dumps(response, indent=2),
@@ -125,15 +136,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 headers=headers,
                 mimetype="application/json"
             )
-        
-        # Get values from environment
-        subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID")
-        resource_group = os.environ.get("AZURE_RESOURCE_GROUP")
-        location = os.environ.get("AZURE_LOCATION")
-        container_image = os.environ.get("CONTAINER_IMAGE")
-        registry_server = os.environ.get("REGISTRY_SERVER")
-        registry_username = os.environ.get("REGISTRY_USERNAME")
-        registry_password = os.environ.get("REGISTRY_PASSWORD")
         
         # Try to initialize Azure credentials
         try:
@@ -169,7 +171,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 
                 response["container_client_check"] = {
                     "status": "success",
-                    "message": "Container client initialized successfully"
+                    "message": "Container client initialized successfully",
+                    "registry": registry_server,
+                    "image": container_image
                 }
                 response["stage"] = "container_client_check"
                 
@@ -247,7 +251,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         ).content
                         
                         logging.info(f"Container logs: {logs}")
-                        response["container_logs"] = logs
                         
                         # Parse the logs to get the prediction result
                         try:
