@@ -4,6 +4,8 @@ import json
 import os
 import traceback
 import requests
+import platform
+import sys
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 from azure.mgmt.containerinstance.models import (
@@ -15,7 +17,7 @@ from azure.mgmt.containerinstance.models import (
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     
-    # Add CORS headers
+    # Add CORS headers for all responses
     headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -24,17 +26,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     
     # Handle OPTIONS request for CORS preflight
     if req.method == "OPTIONS":
+        logging.info("Handling OPTIONS preflight request")
         return func.HttpResponse(
             status_code=204,
             headers=headers
         )
+
+    # Log detailed information about the environment and request
+    logging.info(f"Python version: {platform.python_version()}")
+    logging.info(f"System info: {platform.system()} {platform.release()}")
+    logging.info(f"Request URL: {req.url}")
+    logging.info(f"Request method: {req.method}")
+    logging.info(f"Request headers: {dict(req.headers)}")
+    
+    # Log available environment variables (excluding sensitive ones)
+    env_vars_safe = {k: v for k, v in os.environ.items() 
+                     if not any(secret in k.lower() for secret in ["key", "password", "token", "secret"])}
+    logging.info(f"Environment variables: {env_vars_safe}")
+    
+    # Log import paths for troubleshooting
+    logging.info(f"Python path: {sys.path}")
     
     try:
-        # Log request details for debugging
-        logging.info(f"Request method: {req.method}")
-        logging.info(f"Request URL: {req.url}")
-        logging.info(f"Request headers: {dict(req.headers)}")
-        
         # Get request body
         try:
             req_body = req.get_json()
@@ -42,7 +55,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         except ValueError:
             logging.warning("Request body is not valid JSON or is empty")
             return func.HttpResponse(
-                json.dumps({"error": "Request body must be valid JSON"}),
+                json.dumps({"error": "Request body must be valid JSON with 'features' array"}),
                 status_code=400,
                 headers=headers,
                 mimetype="application/json"
@@ -52,43 +65,57 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         features = req_body.get('features', [])
         
         if not features or len(features) != 4:
-            logging.warning(f"Invalid features: {features}")
+            logging.warning(f"Invalid features array: {features}")
             return func.HttpResponse(
-                json.dumps({"error": "Invalid or missing features. Expected 4 features: CulmenLength, CulmenDepth, FlipperLength, BodyMass"}),
+                json.dumps({
+                    "error": "Invalid or missing features array",
+                    "details": "Expected an array with exactly 4 numeric values: [culmenLength, culmenDepth, flipperLength, bodyMass]",
+                    "received": features
+                }),
                 status_code=400,
                 headers=headers,
                 mimetype="application/json"
             )
         
-        # Log environment variables for debugging (masking sensitive values)
-        env_vars = {
-            "AZURE_SUBSCRIPTION_ID": os.environ.get("AZURE_SUBSCRIPTION_ID", "Not set"),
-            "AZURE_RESOURCE_GROUP": os.environ.get("AZURE_RESOURCE_GROUP", "Not set"),
-            "CONTAINER_IMAGE": os.environ.get("CONTAINER_IMAGE", "Not set"),
-            "REGISTRY_SERVER": os.environ.get("REGISTRY_SERVER", "Not set"),
-            "REGISTRY_USERNAME": "******" if os.environ.get("REGISTRY_USERNAME") else "Not set",
-            "REGISTRY_PASSWORD": "******" if os.environ.get("REGISTRY_PASSWORD") else "Not set",
-        }
-        logging.info(f"Environment variables: {env_vars}")
-        
-        # For quick testing without container, return sample response
+        # Check if we should use bypass mode for testing
         if os.environ.get("BYPASS_CONTAINER", "false").lower() == "true":
-            logging.info("Bypassing container and returning sample response")
-            sample_response = {
+            logging.info("BYPASS_CONTAINER is true, returning mock response")
+            mock_response = {
                 "prediction": 1,
                 "class": "Chinstrap",
                 "species_name": "Chinstrap",
                 "confidence": 0.92,
                 "features": features,
-                "note": "This is a sample response, container was bypassed"
+                "note": "This is a mock response (BYPASS_CONTAINER=true)"
             }
             return func.HttpResponse(
-                json.dumps(sample_response),
+                json.dumps(mock_response),
                 status_code=200,
                 headers=headers,
                 mimetype="application/json"
             )
+            
+        # Debug environment variables needed for container instance
+        missing_vars = []
+        for var in ["AZURE_SUBSCRIPTION_ID", "AZURE_RESOURCE_GROUP", 
+                   "CONTAINER_IMAGE", "REGISTRY_SERVER", 
+                   "REGISTRY_USERNAME", "REGISTRY_PASSWORD"]:
+            if not os.environ.get(var):
+                missing_vars.append(var)
         
+        if missing_vars:
+            logging.error(f"Missing required environment variables: {missing_vars}")
+            return func.HttpResponse(
+                json.dumps({
+                    "error": "Configuration error",
+                    "details": f"Missing required environment variables: {missing_vars}",
+                    "help": "Please set these variables in the Azure Function App configuration"
+                }),
+                status_code=500,
+                headers=headers,
+                mimetype="application/json"
+            )
+            
         # Start container instance and process the classification
         result = process_with_container(features)
         
@@ -102,11 +129,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
     except Exception as e:
         error_details = traceback.format_exc()
-        logging.error(f"Error processing request: {str(e)}\n{error_details}")
+        error_type = type(e).__name__
+        logging.error(f"Error: {str(e)}\nType: {error_type}\nDetails: {error_details}")
+        
         return func.HttpResponse(
             json.dumps({
                 "error": str(e),
-                "details": error_details if os.environ.get("INCLUDE_ERROR_DETAILS", "false").lower() == "true" else "Enable INCLUDE_ERROR_DETAILS in function settings for more information"
+                "error_type": error_type,
+                "details": error_details if os.environ.get("INCLUDE_ERROR_DETAILS", "true").lower() == "true" else "Set INCLUDE_ERROR_DETAILS=true for more info",
+                "debug_endpoint": "/api/debug"
             }),
             status_code=500,
             headers=headers,
@@ -114,31 +145,40 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 def process_with_container(features):
-    # Configuration for Azure Container Instance
-    subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID")
-    resource_group = os.environ.get("AZURE_RESOURCE_GROUP")
-    container_group_name = f"penguin-classifier-{os.urandom(4).hex()}"  # Generate unique name
-    container_image = os.environ.get("CONTAINER_IMAGE")  # e.g., "myregistry.azurecr.io/penguin-classifier:latest"
-    registry_server = os.environ.get("REGISTRY_SERVER")
-    registry_username = os.environ.get("REGISTRY_USERNAME")
-    registry_password = os.environ.get("REGISTRY_PASSWORD")
-    
-    # Log container setup
-    logging.info(f"Setting up container: {container_group_name}")
-    logging.info(f"Using image: {container_image}")
-    
-    # Prepare environment variables for the container
-    env_vars = [
-        EnvironmentVariable(name="MODEL_PATH", value="/app/models/penguins_model.pkl"),
-        EnvironmentVariable(name="FEATURES", value=json.dumps(features))
-    ]
+    """Process the classification request using a container instance"""
+    logging.info(f"Starting container processing with features: {features}")
     
     try:
+        # Configuration for Azure Container Instance
+        subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID")
+        resource_group = os.environ.get("AZURE_RESOURCE_GROUP")
+        container_group_name = f"penguin-classifier-{os.urandom(4).hex()}"  # Generate unique name
+        container_image = os.environ.get("CONTAINER_IMAGE")
+        registry_server = os.environ.get("REGISTRY_SERVER")
+        registry_username = os.environ.get("REGISTRY_USERNAME")
+        registry_password = os.environ.get("REGISTRY_PASSWORD")
+        
+        # Log info (without sensitive data)
+        logging.info(f"Setting up container: {container_group_name}")
+        logging.info(f"Using image: {container_image}")
+        logging.info(f"Registry server: {registry_server}")
+        
+        # Prepare environment variables for the container
+        env_vars = [
+            EnvironmentVariable(name="MODEL_PATH", value="/app/models/penguins_model.pkl"),
+            EnvironmentVariable(name="FEATURES", value=json.dumps(features))
+        ]
+        
         # Initialize the Container Instance client
         logging.info("Initializing DefaultAzureCredential")
-        credential = DefaultAzureCredential()
+        try:
+            credential = DefaultAzureCredential()
+            logging.info("DefaultAzureCredential initialized successfully")
+        except Exception as auth_error:
+            logging.error(f"Error initializing DefaultAzureCredential: {str(auth_error)}")
+            raise Exception(f"Authentication failed: {str(auth_error)}")
         
-        logging.info("Initializing ContainerInstanceManagementClient")
+        logging.info("Creating ContainerInstanceManagementClient")
         client = ContainerInstanceManagementClient(credential, subscription_id)
         
         # Define container group
@@ -178,25 +218,37 @@ def process_with_container(features):
         )
         
         # Create the container group
-        logging.info(f"Creating container group {container_group_name}")
-        container_group_creation = client.container_groups.begin_create_or_update(
-            resource_group,
-            container_group_name,
-            container_group
-        )
-        
-        # Wait for the container to complete
-        container_group_result = container_group_creation.result()
-        logging.info(f"Container group created: {container_group_result.name}")
+        logging.info(f"Creating container group {container_group_name} in resource group {resource_group}")
+        try:
+            container_group_creation = client.container_groups.begin_create_or_update(
+                resource_group,
+                container_group_name,
+                container_group
+            )
+            
+            # Wait for the container to complete
+            container_group_result = container_group_creation.result()
+            logging.info(f"Container group created: {container_group_result.name}")
+            logging.info(f"Container group provisioning state: {container_group_result.provisioning_state}")
+            
+        except Exception as create_error:
+            logging.error(f"Error creating container group: {str(create_error)}")
+            error_details = traceback.format_exc()
+            raise Exception(f"Container creation failed: {str(create_error)}\n{error_details}")
         
         # Get container logs for output
-        logs = client.containers.list_logs(
-            resource_group, 
-            container_group_name, 
-            "penguin-classifier-container"
-        ).content
-        
-        logging.info(f"Container logs: {logs}")
+        try:
+            logging.info("Retrieving container logs")
+            logs = client.containers.list_logs(
+                resource_group, 
+                container_group_name, 
+                "penguin-classifier-container"
+            ).content
+            
+            logging.info(f"Container logs: {logs}")
+        except Exception as log_error:
+            logging.error(f"Error getting container logs: {str(log_error)}")
+            logs = f"Error retrieving logs: {str(log_error)}"
         
         # Parse the logs to get the prediction result
         try:
@@ -206,8 +258,10 @@ def process_with_container(features):
             if json_match:
                 result_json = json_match.group(1)
                 result = json.loads(result_json)
+                logging.info(f"Successfully parsed result: {result}")
             else:
                 # If no JSON found, return a formatted message
+                logging.warning("No JSON found in container logs")
                 result = {
                     "error": "Container did not return valid JSON output",
                     "logs": logs
@@ -226,11 +280,19 @@ def process_with_container(features):
         
         # Clean up - delete the container group
         logging.info(f"Deleting container group {container_group_name}")
-        client.container_groups.begin_delete(resource_group, container_group_name)
+        try:
+            client.container_groups.begin_delete(resource_group, container_group_name)
+            logging.info("Container group deletion initiated")
+        except Exception as delete_error:
+            logging.error(f"Error deleting container group: {str(delete_error)}")
         
         return result
         
     except Exception as e:
         error_details = traceback.format_exc()
         logging.error(f"Error in container processing: {str(e)}\n{error_details}")
-        raise
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "details": error_details
+        }
