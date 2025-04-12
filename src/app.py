@@ -1,5 +1,7 @@
 import os
 import joblib
+import json
+import sys
 from flask import Flask, request, jsonify
 
 # Initialize Flask app
@@ -37,7 +39,7 @@ def predict():
     prediction = int(model.predict([features])[0])
     
     # Get class names (these should match what you used in training)
-    penguin_classes = ['first_category', 'sec_category', 'third_category']
+    penguin_classes = ['Adelie', 'Chinstrap', 'Gentoo']
     
     # Return prediction result
     return jsonify({
@@ -56,8 +58,54 @@ def get_model():
             return None
     return get_model.model
 
+def classify_from_env():
+    """Classify penguin based on features from environment variable"""
+    try:
+        # Get features from environment variable
+        features_str = os.environ.get('FEATURES')
+        if not features_str:
+            print(json.dumps({"error": "No features provided in FEATURES environment variable"}))
+            return 1
+            
+        # Parse features
+        features = json.loads(features_str)
+        
+        # Validate features
+        if len(features) != 4:
+            print(json.dumps({"error": "Expected 4 features: CulmenLength, CulmenDepth, FlipperLength, BodyMass"}))
+            return 1
+            
+        # Load model
+        model = get_model()
+        if model is None:
+            print(json.dumps({"error": f"Failed to load model from {MODEL_PATH}"}))
+            return 1
+            
+        # Make prediction
+        prediction = int(model.predict([features])[0])
+        
+        # Get class names
+        penguin_classes = ['Adelie', 'Chinstrap', 'Gentoo']
+        
+        # Output prediction as JSON
+        result = {
+            "prediction": prediction,
+            "class": penguin_classes[prediction],
+            "features": features
+        }
+        
+        print(json.dumps(result))
+        return 0
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+        return 1
+
 if __name__ == '__main__':
-    # Check if model loads correctly
+    # Check if we're in classify-only mode (for container instances)
+    if len(sys.argv) > 1 and sys.argv[1] == '--classify-only':
+        sys.exit(classify_from_env())
+    
+    # Normal mode: Check if model loads correctly
     model = get_model()
     if model is None:
         print(f"Failed to load model from {MODEL_PATH}")

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penguin Species Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .top-section {
+            height: 100px;
+        }
+
+        .feature-section {
+            margin-bottom: 20px;
+        }
+
+        .result-container {
+            height: 200px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #penguin-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin-bottom: 20px;
+        }
+
+        #loading {
+            display: none;
+        }
+
+        .feature-input {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1>Penguin Species Classifier</h1>
+                <p class="lead">Enter penguin measurements to predict its species</p>
+                <img id="penguin-image" src="{{ url_for('static', filename='penguin.png') }}" alt="Penguin illustration"
+                    class="img-fluid">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Penguin Features</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="classifier-form">
+                            <div class="row feature-section">
+                                <div class="col-md-6 feature-input">
+                                    <label for="culmen-length" class="form-label">Culmen Length (mm):</label>
+                                    <input type="number" class="form-control" id="culmen-length" value="39.1" step="0.1"
+                                        required>
+                                </div>
+                                <div class="col-md-6 feature-input">
+                                    <label for="culmen-depth" class="form-label">Culmen Depth (mm):</label>
+                                    <input type="number" class="form-control" id="culmen-depth" value="18.7" step="0.1"
+                                        required>
+                                </div>
+                                <div class="col-md-6 feature-input">
+                                    <label for="flipper-length" class="form-label">Flipper Length (mm):</label>
+                                    <input type="number" class="form-control" id="flipper-length" value="18.1"
+                                        step="0.1" required>
+                                    <small class="form-text text-muted">This is normalized (divided by 10)</small>
+                                </div>
+                                <div class="col-md-6 feature-input">
+                                    <label for="body-mass" class="form-label">Body Mass (g):</label>
+                                    <input type="number" class="form-control" id="body-mass" value="37.5" step="0.1"
+                                        required>
+                                    <small class="form-text text-muted">This is normalized (divided by 100)</small>
+                                </div>
+                            </div>
+
+                            <!-- Process button -->
+                            <div class="d-grid mb-4">
+                                <button id="process-btn" class="btn btn-success" type="submit">Classify Penguin
+                                    Species</button>
+                            </div>
+                        </form>
+
+                        <!-- Loading indicator -->
+                        <div id="loading" class="text-center my-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Processing, please wait...</p>
+                        </div>
+
+                        <!-- Results section -->
+                        <div class="result-container" id="result-container">
+                            <div id="output-value" class="h4">Enter penguin measurements and click 'Classify Penguin
+                                Species'</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const classifierForm = document.getElementById('classifier-form');
+            const processBtn = document.getElementById('process-btn');
+            const outputValue = document.getElementById('output-value');
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('result-container');
+
+            // Handle form submission
+            classifierForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Show loading indicator
+                loading.style.display = 'block';
+                resultContainer.style.opacity = '0.5';
+
+                // Get form values
+                const culmenLength = document.getElementById('culmen-length').value;
+                const culmenDepth = document.getElementById('culmen-depth').value;
+                const flipperLength = document.getElementById('flipper-length').value;
+                const bodyMass = document.getElementById('body-mass').value;
+
+                // Create payload for API
+                const payload = {
+                    features: [
+                        parseFloat(culmenLength),
+                        parseFloat(culmenDepth),
+                        parseFloat(flipperLength),
+                        parseFloat(bodyMass)
+                    ]
+                };
+
+                // Send to server
+                fetch('/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+
+                        // Update output value with formatted result
+                        const speciesName = data.species_name || data.class;
+                        const confidenceHtml = data.confidence ? `<div class="mt-2">Confidence: ${(data.confidence * 100).toFixed(2)}%</div>` : '';
+
+                        outputValue.innerHTML = `
+                        <div class="alert alert-success mb-0">
+                            <div class="h3">Predicted Species: ${speciesName}</div>
+                            ${confidenceHtml}
+                        </div>
+                    `;
+
+                        resultContainer.style.opacity = '1';
+                    })
+                    .catch(error => {
+                        outputValue.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                        console.error('Error:', error);
+                    })
+                    .finally(() => {
+                        // Hide loading indicator
+                        loading.style.display = 'none';
+                    });
+            });
+        });
+    </script>
+</body>
+
+</html>
