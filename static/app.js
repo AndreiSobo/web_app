@@ -199,46 +199,56 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Response data:', data);
 
         // Handle error in the response data
-        if (data.error) {
+        if (data.error || data.success === false) {
+            let errorMessage = data.error || data.message || "Unknown error";
             let errorDetails = '';
-            if (debugMode.checked && data.details) {
-                errorDetails = `<hr><div class="small mt-2"><pre>${data.details}</pre></div>`;
+
+            if (debugMode.checked) {
+                if (data.details) {
+                    errorDetails = `<hr><div class="small mt-2"><pre>${data.details}</pre></div>`;
+                }
+                else if (data.environment_check) {
+                    errorDetails = `<hr><div class="small mt-2">
+                    <p>Missing environment variables: ${data.environment_check.missing_vars.join(', ')}</p>
+                    <pre>${JSON.stringify(data.environment_check, null, 2)}</pre>
+                </div>`;
+                }
             }
 
             outputValue.innerHTML = `
-                <div class="alert alert-danger mb-0">
-                    <div class="h5">API Error</div>
-                    <p>${data.error}</p>
-                    ${errorDetails}
-                </div>
-            `;
+            <div class="alert alert-danger mb-0">
+                <div class="h5">API Error</div>
+                <p>${errorMessage}</p>
+                ${errorDetails}
+            </div>
+        `;
             resultContainer.style.opacity = '1';
             return;
         }
 
         // Update output value with formatted result
-        const speciesName = data.species_name || data.class;
+        const speciesName = data.species_name || data.class || "Unknown";
         const confidenceHtml = data.confidence ?
             `<div class="mt-2">Confidence: ${(data.confidence * 100).toFixed(2)}%</div>` : '';
 
         let additionalInfo = '';
         if (debugMode.checked) {
             additionalInfo = `
-                <hr>
-                <div class="small text-muted mt-2">
-                    <strong>Debug Info:</strong>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                </div>
-            `;
+            <hr>
+            <div class="small text-muted mt-2">
+                <strong>Debug Info:</strong>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
         }
 
         outputValue.innerHTML = `
-            <div class="alert alert-success mb-0">
-                <div class="h3">Predicted Species: ${speciesName}</div>
-                ${confidenceHtml}
-                ${additionalInfo}
-            </div>
-        `;
+        <div class="alert alert-success mb-0">
+            <div class="h3">Predicted Species: ${speciesName}</div>
+            ${confidenceHtml}
+            ${additionalInfo}
+        </div>
+    `;
 
         resultContainer.style.opacity = '1';
     }
