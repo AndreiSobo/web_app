@@ -82,7 +82,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Get values from environment with defaults
         subscription_id = os.environ.get("AZURE_SUBSCRIPTION_ID")
         resource_group = os.environ.get("AZURE_RESOURCE_GROUP")
-        location = os.environ.get("AZURE_LOCATION", "eastus")
+        location = os.environ.get("AZURE_LOCATION", "North Europe")  # Default to North Europe
+        registry_location = os.environ.get("REGISTRY_LOCATION", "North Europe")  # Registry is also in North Europe
         container_image = os.environ.get("CONTAINER_IMAGE", default_image)
         registry_server = os.environ.get("REGISTRY_SERVER", default_registry)
         registry_username = os.environ.get("REGISTRY_USERNAME")
@@ -99,6 +100,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         missing_vars = []
         env_values = {
             "AZURE_LOCATION": location,
+            "REGISTRY_LOCATION": registry_location,
             "CONTAINER_IMAGE": container_image,
             "REGISTRY_SERVER": registry_server
         }
