@@ -159,7 +159,7 @@ def main():
                 print(f"✅ Successfully listed {len(container_groups)} container groups")
                 
                 # Print container groups for reference
-                if container_groups:
+                if (container_groups):
                     print("\nExisting container groups:")
                     for cg in container_groups:
                         print(f"   - {cg.name} (Status: {cg.provisioning_state})")
@@ -197,12 +197,134 @@ def main():
     if not bypass_container:
         print("\n🧪 Testing a quick container deployment:")
         try:
-            # Run a test with a simple hello-world container just to verify
+            # Real container test with Azure Container Instances
             test_features = [39.1, 18.7, 18.1, 37.5]
             print(f"Will attempt to classify penguin with features: {test_features}")
+            print(f"This will use image: {container_image}")
             
-            print(f"This would use image: {container_image}")
-            print("To test this feature set BYPASS_CONTAINER=false and run again")
+            # Create a unique container name
+            import uuid
+            container_group_name = f"penguin-test-{uuid.uuid4().hex[:8]}"
+            print(f"Creating container group: {container_group_name}")
+            
+            # Initialize the Container Instance client
+            try:
+                # Create credentials object and client
+                credential = DefaultAzureCredential()
+                container_client = ContainerInstanceManagementClient(
+                    credential=credential,
+                    subscription_id=subscription_id
+                )
+                
+                print(f"✅ Successfully initialized Container Instance client")
+                
+                # Create registry credentials
+                registry_credential = ImageRegistryCredential(
+                    server=registry_server,
+                    username=registry_username,
+                    password=registry_password
+                )
+                
+                from azure.mgmt.containerinstance.models import (
+                    ContainerGroup, Container, ResourceRequirements, ResourceRequests,
+                    EnvironmentVariable, ContainerGroupNetworkProtocol,
+                    Port, IpAddress, ContainerGroupIpAddressType
+                )
+                
+                # Prepare environment variables for the container
+                env_vars = [ 
+                    EnvironmentVariable(name="MODEL_PATH", value="/app/models/penguins_model.pkl"),
+                    EnvironmentVariable(name="FEATURES", value=json.dumps(test_features)),
+                    EnvironmentVariable(name="PYTHONUNBUFFERED", value="1")
+                ]
+                
+                # Define container resources
+                container_resource_requests = ResourceRequests(memory_in_gb=1.0, cpu=1.0)
+                container_resources = ResourceRequirements(requests=container_resource_requests)
+                
+                # Define container
+                container = Container(
+                    name="penguin-classifier-container",
+                    image=container_image,
+                    resources=container_resources,
+                    environment_variables=env_vars,
+                    command=["python", "/app/src/app.py", "--classify-only"],
+                    ports=[Port(port=5000)]
+                )
+                
+                # IP address configuration
+                group_ip_address = IpAddress(
+                    ports=[Port(port=5000, protocol=ContainerGroupNetworkProtocol.tcp)],
+                    type=ContainerGroupIpAddressType.public
+                )
+                
+                # Create container group configuration
+                container_group = ContainerGroup(
+                    location=location,
+                    containers=[container],
+                    os_type="Linux",
+                    restart_policy="Never",
+                    image_registry_credentials=[registry_credential],
+                    ip_address=group_ip_address
+                )
+                
+                print(f"🚀 Deploying container group {container_group_name} in {resource_group}...")
+                
+                # Create the container group
+                container_group_creation = container_client.container_groups.begin_create_or_update(
+                    resource_group,
+                    container_group_name,
+                    container_group
+                )
+                
+                # Wait for the container to complete
+                print("⏳ Waiting for container deployment to complete...")
+                container_group_result = container_group_creation.result()
+                print(f"✅ Container group created: {container_group_result.name}")
+                print(f"   Provisioning state: {container_group_result.provisioning_state}")
+                
+                # Get container logs for output
+                import time
+                print("⏳ Waiting for container to start and run (10 seconds)...")
+                time.sleep(10)  # Wait a bit for the container to start and run
+                
+                print("📋 Retrieving container logs...")
+                logs = container_client.containers.list_logs(
+                    resource_group, 
+                    container_group_name, 
+                    "penguin-classifier-container"
+                ).content
+                
+                print("\nContainer Logs:")
+                print("-" * 40)
+                print(logs)
+                print("-" * 40)
+                
+                # Try to extract JSON output from container logs
+                import re
+                json_match = re.search(r'({.*})', logs)
+                if json_match:
+                    result_json = json_match.group(1)
+                    prediction_result = json.loads(result_json)
+                    print("\n✅ Successfully parsed result:")
+                    print(json.dumps(prediction_result, indent=2))
+                    
+                    # Add human-readable species names if prediction exists
+                    if "prediction" in prediction_result and prediction_result["prediction"] in (0, 1, 2):
+                        penguin_species = ['Adelie', 'Chinstrap', 'Gentoo']
+                        species_name = penguin_species[prediction_result['prediction']]
+                        print(f"\n🐧 Penguin classification result: {species_name}")
+                        print(f"   Confidence: {prediction_result.get('confidence', 'N/A')}")
+                else:
+                    print("\n❌ No valid JSON output found in container logs")
+                
+                # Clean up - delete the container group
+                print(f"\n🧹 Cleaning up: Deleting container group {container_group_name}...")
+                container_client.container_groups.begin_delete(resource_group, container_group_name)
+                print("✅ Container group deletion initiated")
+                
+            except Exception as container_error:
+                print(f"❌ Container deployment failed: {str(container_error)}")
         except Exception as e:
             print(f"❌ Container test failed: {str(e)}")
     else:
