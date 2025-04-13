@@ -209,19 +209,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 else if (data.environment_check) {
                     errorDetails = `<hr><div class="small mt-2">
-                    <p>Missing environment variables: ${data.environment_check.missing_vars.join(', ')}</p>
-                    <pre>${JSON.stringify(data.environment_check, null, 2)}</pre>
-                </div>`;
+                        <p>Missing environment variables: ${data.environment_check.missing_vars.join(', ')}</p>
+                        <pre>${JSON.stringify(data.environment_check, null, 2)}</pre>
+                    </div>`;
                 }
+
+                // Add complete response for debugging
+                errorDetails += `<hr><div class="small mt-2">
+                    <strong>Full Response:</strong>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>`;
             }
 
             outputValue.innerHTML = `
-            <div class="alert alert-danger mb-0">
-                <div class="h5">API Error</div>
-                <p>${errorMessage}</p>
-                ${errorDetails}
-            </div>
-        `;
+                <div class="alert alert-warning mb-0">
+                    <div class="h5">API Message</div>
+                    <p>${errorMessage}</p>
+                    ${errorDetails}
+                </div>
+            `;
             resultContainer.style.opacity = '1';
             return;
         }
@@ -234,21 +240,21 @@ document.addEventListener('DOMContentLoaded', function () {
         let additionalInfo = '';
         if (debugMode.checked) {
             additionalInfo = `
-            <hr>
-            <div class="small text-muted mt-2">
-                <strong>Debug Info:</strong>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            </div>
-        `;
+                <hr>
+                <div class="small text-muted mt-2">
+                    <strong>Debug Info:</strong>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
         }
 
         outputValue.innerHTML = `
-        <div class="alert alert-success mb-0">
-            <div class="h3">Predicted Species: ${speciesName}</div>
-            ${confidenceHtml}
-            ${additionalInfo}
-        </div>
-    `;
+            <div class="alert alert-success mb-0">
+                <div class="h3">Predicted Species: ${speciesName}</div>
+                ${confidenceHtml}
+                ${additionalInfo}
+            </div>
+        `;
 
         resultContainer.style.opacity = '1';
     }
