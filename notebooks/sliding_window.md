@@ -47,7 +47,7 @@ Time: O(n) | Space: O(1)
 
 Example 1:
 Input: target = 7, nums = [2,3,1,2,4,3]  
-Output: 2  
+Output: 
 Explanation: [4,3] has length 2.
 
 Example 2:
