@@ -1,5 +1,8 @@
 Instructions to run the app
 
+webpage -> https://blue-wave-0b3a88b03.6.azurestaticapps.net/
+
+
 ## Docker Commands
 
 - `docker-compose build` - Build the container images
