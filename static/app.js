@@ -121,7 +121,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Define all potential endpoint variants to try
         const endpoints = [
-            '/api/ClassifyPenguinSimple', // New simplified endpoint (recommended)
+            '/api/classifypenguinsimple', // New simplified endpoint (recommended) - lowercase
+            '/api/ClassifyPenguinSimple', // New simplified endpoint - mixed case
             '/api/ClassifyPenguin',  // Standard path for Azure Static Web Apps
             '/api/classifypenguin',  // Lowercase variant (Azure Functions can be case-insensitive)
             '/ClassifyPenguin',      // Direct function name
