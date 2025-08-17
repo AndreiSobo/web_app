@@ -31,7 +31,7 @@ FLASK_DEBUG=true
 PORT=8080
 
 # For Azure deployment
-AZURE_FUNCTION_URL=https://your-function-app-name.azurewebsites.net/api/ClassifyPenguin
+AZURE_FUNCTION_URL=https://penguin-classifier-function.azurewebsites.net/api/ClassifyPenguin
 ```
 
 ### For the Azure Function:
@@ -128,7 +128,7 @@ swa deploy \
 
 ## Testing the Deployment
 
-1. Open your web app URL: `https://your-web-app-name.azurewebsites.net/`
+1. Open your web app URL: `https://blue-wave-0b3a88b03.6.azurestaticapps.net/`
 2. Enter penguin measurements
 3. Click "Classify Penguin Species"
 

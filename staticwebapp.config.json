@@ -24,6 +24,16 @@
             ]
         },
         {
+            "route": "/api/ClassifyPenguinSimple",
+            "methods": [
+                "POST",
+                "OPTIONS"
+            ],
+            "allowedRoles": [
+                "anonymous"
+            ]
+        },
+        {
             "route": "/api/debug",
             "methods": [
                 "GET",

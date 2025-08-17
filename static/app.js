@@ -107,13 +107,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const flipperLength = document.getElementById('flipper-length').value;
         const bodyMass = document.getElementById('body-mass').value;
 
-        // Create payload for API
+        // Create payload for API - normalize the input values to match training data
         const payload = {
             features: [
                 parseFloat(culmenLength),
                 parseFloat(culmenDepth),
-                parseFloat(flipperLength),
-                parseFloat(bodyMass)
+                parseFloat(flipperLength) / 10,  // Normalize flipper length by dividing by 10
+                parseFloat(bodyMass) / 100       // Normalize body mass by dividing by 100
             ]
         };
 
@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Define all potential endpoint variants to try
         const endpoints = [
+            '/api/ClassifyPenguinSimple', // New simplified endpoint (recommended)
             '/api/ClassifyPenguin',  // Standard path for Azure Static Web Apps
             '/api/classifypenguin',  // Lowercase variant (Azure Functions can be case-insensitive)
             '/ClassifyPenguin',      // Direct function name
