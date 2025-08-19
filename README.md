@@ -249,7 +249,14 @@ func host start
 2. **Static Web App**: Auto-deploys from GitHub repository
 3. **Configuration**: Set up routing in `staticwebapp.config.json`
 
-## 📚 **Learning Outcomes**
+## 📚 **Documentation**
+
+### **Technical Documentation**
+- **[📖 Complete Technical Deep Dive](TECHNICAL_OVERVIEW.md)** - Comprehensive system architecture and data flow analysis for academic/professional presentations
+- **[📱 Mobile Optimization Guide](MOBILE_OPTIMIZATION.md)** - Mobile responsiveness implementation details
+- **[🚀 Deployment Guide](DEPLOYMENT.md)** - Azure deployment and configuration instructions
+
+### **Learning Outcomes**
 
 This project demonstrates:
 - **Cloud Architecture**: Serverless computing with Azure Functions
