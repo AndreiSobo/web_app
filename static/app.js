@@ -150,9 +150,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // Optimize form inputs for mobile
         const inputs = document.querySelectorAll('input[type="number"]');
         inputs.forEach(input => {
-            // Add mobile-friendly input attributes
-            input.setAttribute('inputmode', 'decimal');
-            input.setAttribute('pattern', '[0-9]*');
+            // Set appropriate inputmode based on field type
+            if (input.id === 'body-mass' || input.id === 'flipper-length') {
+                // Integer fields - use numeric keyboard
+                input.setAttribute('inputmode', 'numeric');
+                input.setAttribute('pattern', '[0-9]*');
+            } else {
+                // Decimal fields (culmen measurements) - use decimal keyboard
+                input.setAttribute('inputmode', 'decimal');
+                input.setAttribute('pattern', '[0-9]*(\.[0-9]*)?');
+            }
 
             // Add visual feedback on focus
             input.addEventListener('focus', function () {
