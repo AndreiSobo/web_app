@@ -11,52 +11,109 @@
 </head>
 
 <body>
-    <div class="container py-5">
+    <div class="container-fluid px-3 py-4">
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <h1>Penguin Species Classifier</h1>
+                <h1 class="display-6 display-md-4">Penguin Species Classifier</h1>
                 <p class="lead">Enter penguin measurements to predict its species</p>
-                <img id="penguin-image" src="./images/penguins.png" alt="Penguin illustration" cla ss="img-fluid">
+                <img id="penguin-image" src="./images/penguins.png" alt="Penguin illustration" class="img-fluid">
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-8 offset-md-2">
-                <div class="card">
+            <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12">
+                <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">Penguin Features</h5>
                     </div>
                     <div class="card-body">
-                        <form id="classifier-form">
-                            <div class="row feature-section">
-                                <div class="col-md-6 feature-input">
+                        <!-- Species Averages Reference -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-info" role="region" aria-labelledby="species-reference-title">
+                                    <h6 id="species-reference-title" class="alert-heading">📊 Species Reference Averages
+                                    </h6>
+                                    <p class="mb-3">Tap any species below to auto-fill the form with typical values:</p>
+                                    <div class="species-reference-grid">
+                                        <div class="species-card">
+                                            <strong>🐧 Adelie</strong>
+                                            <small>
+                                                Culmen: 38.8 × 18.3mm<br>
+                                                Flipper: 190mm, Mass: 3701g
+                                            </small>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="setSpeciesValues('adelie')"
+                                                aria-label="Auto-fill form with Adelie penguin average values">
+                                                Use Adelie Values
+                                            </button>
+                                        </div>
+                                        <div class="species-card">
+                                            <strong>🐧 Chinstrap</strong>
+                                            <small>
+                                                Culmen: 47.5 × 15.0mm<br>
+                                                Flipper: 217mm, Mass: 5076g
+                                            </small>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="setSpeciesValues('chinstrap')"
+                                                aria-label="Auto-fill form with Chinstrap penguin average values">
+                                                Use Chinstrap Values
+                                            </button>
+                                        </div>
+                                        <div class="species-card">
+                                            <strong>🐧 Gentoo</strong>
+                                            <small>
+                                                Culmen: 48.8 × 18.4mm<br>
+                                                Flipper: 196mm, Mass: 3733g
+                                            </small>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                onclick="setSpeciesValues('gentoo')"
+                                                aria-label="Auto-fill form with Gentoo penguin average values">
+                                                Use Gentoo Values
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="classifier-form" role="form" aria-labelledby="form-title">
+                            <h6 id="form-title" class="mb-3">Enter Penguin Measurements</h6>
+                            <div class="feature-section">
+                                <div class="feature-input">
                                     <label for="culmen-length" class="form-label">Culmen Length (mm):</label>
                                     <input type="number" class="form-control" id="culmen-length" value="39.1" step="0.1"
-                                        required>
+                                        required min="30" max="60" aria-describedby="culmen-length-help">
+                                    <div id="culmen-length-help" class="form-text">Typical range: 32-59mm</div>
                                 </div>
-                                <div class="col-md-6 feature-input">
+                                <div class="feature-input">
                                     <label for="culmen-depth" class="form-label">Culmen Depth (mm):</label>
                                     <input type="number" class="form-control" id="culmen-depth" value="18.7" step="0.1"
-                                        required>
+                                        required min="10" max="25" aria-describedby="culmen-depth-help">
+                                    <div id="culmen-depth-help" class="form-text">Typical range: 13-22mm</div>
                                 </div>
-                                <div class="col-md-6 feature-input">
+                                <div class="feature-input">
                                     <label for="flipper-length" class="form-label">Flipper Length (mm):</label>
                                     <input type="number" class="form-control" id="flipper-length" value="181" step="1"
-                                        required>
-                                    <small class="form-text text-muted">Enter the actual flipper length in mm</small>
+                                        required min="150" max="250" aria-describedby="flipper-length-help">
+                                    <div id="flipper-length-help" class="form-text">Typical range: 172-231mm</div>
                                 </div>
-                                <div class="col-md-6 feature-input">
+                                <div class="feature-input">
                                     <label for="body-mass" class="form-label">Body Mass (g):</label>
                                     <input type="number" class="form-control" id="body-mass" value="3750" step="10"
-                                        required>
-                                    <small class="form-text text-muted">Enter the actual body mass in grams</small>
+                                        required min="2000" max="7000" aria-describedby="body-mass-help">
+                                    <div id="body-mass-help" class="form-text">Typical range: 2700-6300g</div>
                                 </div>
                             </div>
 
                             <!-- Process button -->
                             <div class="d-grid mb-4">
-                                <button id="process-btn" class="btn btn-success" type="submit">Classify Penguin
-                                    Species</button>
+                                <button id="process-btn" class="btn btn-success" type="submit"
+                                    aria-describedby="process-help">
+                                    🔍 Classify Penguin Species
+                                </button>
+                                <div id="process-help" class="form-text text-center mt-2">
+                                    AI will analyze the measurements to predict the penguin species
+                                </div>
                             </div>
                         </form>
 

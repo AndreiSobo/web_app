@@ -10,9 +10,6 @@ function_app/
 │   ├── __init__.py                 # Function implementation
 │   ├── function.json               # Azure Functions binding configuration
 │   └── penguins_model.pkl          # Trained ML model (268KB)
-├── DebugEndpoint/                  # Health check and diagnostics
-│   ├── __init__.py                 # Debug function implementation
-│   └── function.json               # Debug function configuration
 ├── host.json                       # Global Functions host configuration
 └── requirements.txt                # Python dependencies
 ```
@@ -189,35 +186,6 @@ The function implements comprehensive error handling:
 4. **System Errors**: Memory issues, timeout errors
 
 Each error returns appropriate HTTP status codes and descriptive error messages.
-
-## 🔍 **DebugEndpoint Function**
-
-### **Purpose**
-Provides health checks and diagnostic information for troubleshooting deployment issues.
-
-### **Implementation**
-```python
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    """Simple debug endpoint with minimal dependencies"""
-    
-    # Basic health check response
-    return func.HttpResponse(
-        json.dumps({
-            "status": "success",
-            "message": "Debug endpoint is working!",
-            "available_env_vars": [k for k in os.environ.keys()],
-            "function_app": "found"
-        }),
-        mimetype="application/json",
-        headers=headers
-    )
-```
-
-### **Use Cases**
-- **Deployment Verification**: Confirm function app is responding
-- **Environment Debugging**: Check available environment variables
-- **CORS Testing**: Verify cross-origin request handling
-- **Connectivity Testing**: Ensure Static Web App can reach Functions
 
 ## ⚙️ **Host Configuration**
 

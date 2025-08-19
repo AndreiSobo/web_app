@@ -2,6 +2,26 @@
 
 A machine learning web application that classifies penguin species based on physical measurements using a Random Forest model deployed on Azure.
 
+## 🚀 **Quick Start**
+
+**Live Demo**: [https://blue-wave-0b3a88b03.6.azurestaticapps.net/](https://blue-wave-0b3a88b03.6.azurestaticapps.net/)
+
+### **✨ New Feature: Species Reference Values**
+The web interface now includes average measurements for each penguin species:
+- **Adelie**: Culmen 38.8×18.3mm, Flipper 190mm, Mass 3701g
+- **Chinstrap**: Culmen 47.5×15.0mm, Flipper 217mm, Mass 5076g  
+- **Gentoo**: Culmen 48.8×18.4mm, Flipper 196mm, Mass 3733g
+
+Click "Use Values" buttons to quickly test with realistic species data!
+
+### **Test the API Directly**
+```bash
+# Test with Chinstrap penguin averages
+curl -X POST https://penguin-classifier-function.azurewebsites.net/api/classifypenguinsimple \
+  -H "Content-Type: application/json" \
+  -d '{"features": [47.5, 15.0, 21.7, 50.76]}'
+```
+
 ## 🎯 **Project Overview**
 
 ### **Purpose**

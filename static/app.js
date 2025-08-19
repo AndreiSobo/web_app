@@ -1,3 +1,6 @@
+// Mobile-responsive Penguin Classifier Application
+// Enhanced with touch interactions and accessibility features
+
 document.addEventListener('DOMContentLoaded', function () {
     const classifierForm = document.getElementById('classifier-form');
     const processBtn = document.getElementById('process-btn');
@@ -5,101 +8,36 @@ document.addEventListener('DOMContentLoaded', function () {
     const loading = document.getElementById('loading');
     const resultContainer = document.getElementById('result-container');
 
-    // Add debug mode checkbox
-    const debugSection = document.createElement('div');
-    debugSection.className = 'mt-3 mb-3 text-end';
-    debugSection.innerHTML = `
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="debug-mode">
-            <label class="form-check-label" for="debug-mode">Debug Mode</label>
-        </div>
-    `;
-    classifierForm.appendChild(debugSection);
+    // Mobile detection and optimization
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    const debugMode = document.getElementById('debug-mode');
+    // Initialize mobile-specific features
+    if (isMobile || isTouchDevice) {
+        initializeMobileFeatures();
+    }
 
     // Initially hide the loading indicator
     loading.style.display = 'none';
 
-    // Add a test debug button that only shows in debug mode
-    const debugButtonDiv = document.createElement('div');
-    debugButtonDiv.className = 'd-grid mb-3';
-    debugButtonDiv.style.display = 'none';
-    debugButtonDiv.innerHTML = `
-        <button type="button" id="debug-btn" class="btn btn-secondary">
-            Test Debug Endpoint
-        </button>
-    `;
-    classifierForm.appendChild(debugButtonDiv);
-    const debugButton = document.getElementById('debug-btn');
-
-    // Show/hide debug elements based on checkbox
-    debugMode.addEventListener('change', function () {
-        debugButtonDiv.style.display = debugMode.checked ? 'block' : 'none';
-    });
-
-    // Debug button handler
-    debugButton.addEventListener('click', function () {
-        loading.style.display = 'block';
-        resultContainer.style.opacity = '0.5';
-
-        // Try both possible debug endpoint paths
-        fetch('/api/DebugEndpoint', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    console.log('First debug path failed, trying alternative path');
-                    return fetch('/api/debug', {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                }
-                return response;
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Debug endpoint error: ${response.status} ${response.statusText}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                let debugHtml = `
-                <div class="alert alert-info mb-0">
-                    <h4>Debug Information</h4>
-                    <pre style="max-height: 400px; overflow: auto;">${JSON.stringify(data, null, 2)}</pre>
-                </div>
-            `;
-                outputValue.innerHTML = debugHtml;
-                resultContainer.style.opacity = '1';
-            })
-            .catch(error => {
-                outputValue.innerHTML = `
-                <div class="alert alert-danger mb-0">
-                    <div class="h5">Debug Error</div>
-                    <p>${error.message}</p>
-                    <p>Check Azure Function logs for more details.</p>
-                </div>
-            `;
-                console.error('Debug Error:', error);
-            })
-            .finally(() => {
-                loading.style.display = 'none';
-            });
-    });
-
-    // Handle form submission
+    // Enhanced form submission with mobile feedback
     classifierForm.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        // Show loading indicator
+        // Provide immediate visual feedback for mobile users
+        if (isTouchDevice) {
+            processBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                processBtn.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        // Show loading indicator with accessibility
         loading.style.display = 'block';
+        loading.setAttribute('aria-live', 'polite');
         resultContainer.style.opacity = '0.5';
+        processBtn.disabled = true;
+        processBtn.innerHTML = '🔄 Processing...';
 
         // Get form values
         const culmenLength = document.getElementById('culmen-length').value;
@@ -119,67 +57,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Sending request payload:', payload);
 
-        // Define all potential endpoint variants to try
-        const endpoints = [
-            '/api/classifypenguinsimple', // New simplified endpoint (recommended) - lowercase
-            '/api/ClassifyPenguinSimple', // New simplified endpoint - mixed case
-            '/api/ClassifyPenguin',  // Standard path for Azure Static Web Apps
-            '/api/classifypenguin',  // Lowercase variant (Azure Functions can be case-insensitive)
-            '/ClassifyPenguin',      // Direct function name
-            '/classify'              // Our custom route from staticwebapp.config.json
-        ];
+        // Define endpoint to use (simplified)
+        const endpoint = '/api/classifypenguinsimple';
 
-        // Try each endpoint one by one
-        tryEndpoints(endpoints, payload, 0);
-    });
-
-    // Try multiple endpoints in sequence
-    function tryEndpoints(endpoints, payload, index) {
-        if (index >= endpoints.length) {
-            // All endpoints failed
-            outputValue.innerHTML = `
-                <div class="alert alert-danger mb-0">
-                    <div class="h5">All API endpoints failed</div>
-                    <p>Tried: ${endpoints.join(', ')}</p>
-                    ${debugMode.checked ? `
-                        <hr>
-                        <p>Try these troubleshooting steps:</p>
-                        <ol>
-                            <li>Check if the Debug endpoint works (/api/DebugEndpoint)</li>
-                            <li>Ensure all environment variables are set in Azure</li>
-                            <li>Check Azure Function logs in the Azure Portal</li>
-                        </ol>
-                    ` : ''}
-                </div>
-            `;
-            loading.style.display = 'none';
-            return;
-        }
-
-        const endpoint = endpoints[index];
-        console.log(`Trying endpoint: ${endpoint}`);
-
-        if (debugMode.checked) {
-            outputValue.innerHTML = `
-                <div class="alert alert-info mb-0">
-                    <div class="h5">Trying endpoint ${index + 1}/${endpoints.length}</div>
-                    <p>${endpoint}...</p>
-                </div>
-            `;
-        }
-
-        callEndpoint(endpoint, payload)
-            .then(handleResponse)
-            .catch(error => {
-                console.error(`Endpoint ${endpoint} failed:`, error);
-                // Try next endpoint
-                tryEndpoints(endpoints, payload, index + 1);
-            });
-    }
-
-    // Function to call an endpoint with error handling
-    function callEndpoint(url, payload) {
-        return fetch(url, {
+        // Make the API call
+        fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -187,14 +69,26 @@ document.addEventListener('DOMContentLoaded', function () {
             body: JSON.stringify(payload)
         })
             .then(response => {
-                console.log(`${url} response status:`, response.status);
+                console.log(`${endpoint} response status:`, response.status);
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}, URL: ${url}`);
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 return response.json();
+            })
+            .then(handleResponse)
+            .catch(error => {
+                console.error('Prediction failed:', error);
+                outputValue.innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <div class="h5">Prediction Failed</div>
+                    <p>Unable to get prediction. Please try again.</p>
+                    <small class="text-muted">Error: ${error.message}</small>
+                </div>
+            `;
+                resetFormState();
             });
-    }
+    });
 
     // Function to handle a successful response
     function handleResponse(data) {
@@ -203,34 +97,14 @@ document.addEventListener('DOMContentLoaded', function () {
         // Handle error in the response data
         if (data.error || data.success === false) {
             let errorMessage = data.error || data.message || "Unknown error";
-            let errorDetails = '';
-
-            if (debugMode.checked) {
-                if (data.details) {
-                    errorDetails = `<hr><div class="small mt-2"><pre>${data.details}</pre></div>`;
-                }
-                else if (data.environment_check) {
-                    errorDetails = `<hr><div class="small mt-2">
-                        <p>Missing environment variables: ${data.environment_check.missing_vars.join(', ')}</p>
-                        <pre>${JSON.stringify(data.environment_check, null, 2)}</pre>
-                    </div>`;
-                }
-
-                // Add complete response for debugging
-                errorDetails += `<hr><div class="small mt-2">
-                    <strong>Full Response:</strong>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                </div>`;
-            }
 
             outputValue.innerHTML = `
                 <div class="alert alert-warning mb-0">
                     <div class="h5">API Message</div>
                     <p>${errorMessage}</p>
-                    ${errorDetails}
                 </div>
             `;
-            resultContainer.style.opacity = '1';
+            resetFormState();
             return;
         }
 
@@ -239,25 +113,120 @@ document.addEventListener('DOMContentLoaded', function () {
         const confidenceHtml = data.confidence ?
             `<div class="mt-2">Confidence: ${(data.confidence * 100).toFixed(2)}%</div>` : '';
 
-        let additionalInfo = '';
-        if (debugMode.checked) {
-            additionalInfo = `
-                <hr>
-                <div class="small text-muted mt-2">
-                    <strong>Debug Info:</strong>
-                    <pre>${JSON.stringify(data, null, 2)}</pre>
-                </div>
-            `;
-        }
-
         outputValue.innerHTML = `
             <div class="alert alert-success mb-0">
                 <div class="h3">Predicted Species: ${speciesName}</div>
                 ${confidenceHtml}
-                ${additionalInfo}
             </div>
         `;
 
+        resetFormState();
+    }
+
+    // Reset form state function for mobile UX
+    function resetFormState() {
+        loading.style.display = 'none';
         resultContainer.style.opacity = '1';
+        processBtn.disabled = false;
+        processBtn.innerHTML = '🔍 Classify Penguin Species';
+        processBtn.setAttribute('aria-live', 'polite');
+    }
+
+    // Mobile-specific initialization
+    function initializeMobileFeatures() {
+        // Add touch feedback to all interactive elements
+        const interactiveElements = document.querySelectorAll('button, .species-card, .form-control');
+
+        interactiveElements.forEach(element => {
+            element.addEventListener('touchstart', function () {
+                this.style.opacity = '0.7';
+            }, { passive: true });
+
+            element.addEventListener('touchend', function () {
+                this.style.opacity = '1';
+            }, { passive: true });
+        });
+
+        // Optimize form inputs for mobile
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            // Add mobile-friendly input attributes
+            input.setAttribute('inputmode', 'decimal');
+            input.setAttribute('pattern', '[0-9]*');
+
+            // Add visual feedback on focus
+            input.addEventListener('focus', function () {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+
+            input.addEventListener('blur', function () {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+
+        // Add haptic feedback for supported devices
+        if ('vibrate' in navigator) {
+            processBtn.addEventListener('click', function () {
+                navigator.vibrate(50); // Subtle haptic feedback
+            });
+        }
+
+        // Prevent zoom on input focus (iOS Safari)
+        const meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+
+        // Only apply if not already set
+        if (!document.querySelector('meta[name="viewport"]')) {
+            document.getElementsByTagName('head')[0].appendChild(meta);
+        }
     }
 });
+
+// Function to set species reference values
+function setSpeciesValues(species) {
+    const speciesData = {
+        'adelie': {
+            culmenLength: 38.8,
+            culmenDepth: 18.3,
+            flipperLength: 190,
+            bodyMass: 3701
+        },
+        'chinstrap': {
+            culmenLength: 47.5,
+            culmenDepth: 15.0,
+            flipperLength: 217,
+            bodyMass: 5076
+        },
+        'gentoo': {
+            culmenLength: 48.8,
+            culmenDepth: 18.4,
+            flipperLength: 196,
+            bodyMass: 3733
+        }
+    };
+
+    const data = speciesData[species];
+    if (data) {
+        document.getElementById('culmen-length').value = data.culmenLength;
+        document.getElementById('culmen-depth').value = data.culmenDepth;
+        document.getElementById('flipper-length').value = data.flipperLength;
+        document.getElementById('body-mass').value = data.bodyMass;
+
+        // Add visual feedback
+        const form = document.getElementById('classifier-form');
+        form.style.backgroundColor = '#e8f5e8';
+        setTimeout(() => {
+            form.style.backgroundColor = '';
+        }, 500);
+
+        // Show which species was selected
+        const outputValue = document.getElementById('output-value');
+        outputValue.innerHTML = `
+            <div class="alert alert-info mb-0">
+                <div class="h5">🐧 ${species.charAt(0).toUpperCase() + species.slice(1)} penguin values loaded</div>
+                <p>Click "Classify Penguin Species" to test the prediction</p>
+            </div>
+        `;
+    }
+}

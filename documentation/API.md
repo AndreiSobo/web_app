@@ -130,42 +130,7 @@ curl -X POST https://penguin-classifier-function.azurewebsites.net/api/classifyp
 }
 ```
 
-## 🔍 **Debug Endpoint**
-
-### **GET /api/debugendpoint**
-
-Health check and diagnostic endpoint.
-
-#### **Request**
-
-**Method:** GET  
-**Headers:** None required
-
-#### **Response**
-
-**Success Response (200 OK):**
-```json
-{
-    "status": "success",
-    "message": "Debug endpoint is working!",
-    "available_env_vars": ["FUNCTIONS_WORKER_RUNTIME", "WEBSITE_SITE_NAME", ...],
-    "function_app": "found"
-}
-```
-
-**Response Fields:**
-- `status` (string): Health status
-- `message` (string): Diagnostic message
-- `available_env_vars` (array): List of environment variable names
-- `function_app` (string): Function app detection status
-
-#### **Example**
-
-```bash
-curl https://penguin-classifier-function.azurewebsites.net/api/debugendpoint
-```
-
-## 🔒 **Authentication**
+##  **Authentication**
 
 **Current Implementation:** Anonymous access (no authentication required)
 
@@ -320,7 +285,7 @@ class PenguinClassifier {
     }
     
     async health() {
-        const response = await fetch(`${this.baseUrl}/api/debugendpoint`);
+        const response = await fetch(`${this.baseUrl}/api/classifypenguinsimple`, {
         return await response.json();
     }
 }
@@ -369,9 +334,11 @@ curl -s -X POST "$BASE_URL/api/classifypenguinsimple" \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7]}' | jq .
 
-# Test 4: Health check
-echo "Test 4: Health check"
-curl -s "$BASE_URL/api/debugendpoint" | jq .
+# Test with sample data
+echo "Testing API with sample penguin data"
+curl -s -X POST "$BASE_URL/api/classifypenguinsimple" \
+  -H "Content-Type: application/json" \
+  -d '{"features": [39.1, 18.7, 1.81, 3.75]}' | jq .
 
 echo "API testing complete!"
 ```
