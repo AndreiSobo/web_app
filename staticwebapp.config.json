@@ -5,70 +5,16 @@
             "methods": [
                 "GET",
                 "POST",
-                "PUT",
-                "DELETE",
                 "OPTIONS"
             ],
             "allowedRoles": [
                 "anonymous"
             ]
-        },
-        {
-            "route": "/api/ClassifyPenguin",
-            "methods": [
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/api/ClassifyPenguinSimple",
-            "methods": [
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/api/classifypenguinsimple",
-            "methods": [
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/api/debug",
-            "methods": [
-                "GET",
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/classify",
-            "methods": [
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ],
-            "rewrite": "/api/ClassifyPenguin"
         },
         {
             "route": "/static/*",
             "headers": {
-                "cache-control": "must-revalidate, max-age=86400"
+                "cache-control": "public, max-age=86400"
             }
         },
         {
@@ -92,12 +38,15 @@
         }
     },
     "platform": {
-        "apiRuntime": "python:3.9"
+        "apiRuntime": "python:3.10"
     },
     "globalHeaders": {
         "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https://upload.wikimedia.org;",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With"
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
     }
 }
