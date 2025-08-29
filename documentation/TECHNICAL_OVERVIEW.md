@@ -225,7 +225,7 @@ fetch('/api/classifypenguinsimple', {
 ### Phase 4: Azure Functions Processing
 
 **Location**: `function_app/ClassifyPenguinSimple/__init__.py`
-**Technology**: Azure Functions with Python 3.9 runtime
+**Technology**: Azure Functions with Python 3.10 runtime
 
 #### 4.1 Function Trigger and CORS
 ```python
@@ -642,7 +642,85 @@ curl -X POST https://penguin-classifier-function.azurewebsites.net/api/classifyp
 
 ---
 
-## 📖 Conclusion
+## � Key Concepts Explained
+
+### **CORS (Cross-Origin Resource Sharing)**
+
+**What is CORS?** A security mechanism that controls how web pages can access resources from different domains.
+
+**Why needed in this project:**
+- **Static Web App URL**: `https://blue-wave-0b3a88b03.6.azurestaticapps.net`
+- **Function App URL**: `https://penguin-classifier-function.azurewebsites.net`
+- **Different domains**: Browsers block cross-origin requests by default
+
+**Implementation:**
+```python
+# In Azure Function - allow all origins
+headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type"
+}
+```
+
+**Note**: Azure Static Web Apps automatically handles CORS for linked functions when properly integrated.
+
+### **Local Development**
+
+**Running Functions Locally:**
+```bash
+cd function_app
+func start  # Starts on http://localhost:7071
+```
+
+**Serving Static Files Locally:**
+```bash
+cd static
+python -m http.server 8080  # Starts on http://localhost:8080
+```
+
+**Local Configuration:** Update API endpoint in `app.js` for local development:
+```javascript
+// For local development
+const API_BASE = 'http://localhost:7071';
+// For production (current)
+const API_BASE = '';  // Uses relative URLs via Static Web Apps routing
+```
+
+### **Application Insights Monitoring**
+
+**Application Insights** is Azure's application performance monitoring service integrated in `host.json`.
+
+**Monitoring Capabilities:**
+1. **Function Executions**: Track how many times the prediction function is called
+2. **Performance Metrics**: Response times, success rates, error rates  
+3. **User Analytics**: Track unique users with custom telemetry
+4. **Dependencies**: Monitor external service calls
+
+**Accessing Metrics:**
+1. Azure Portal → Function App → Application Insights
+2. View "Live Metrics Stream" for real-time monitoring
+3. Use "Analytics" to query custom metrics
+4. Set up "Alerts" for error thresholds
+
+**Custom Usage Tracking Example:**
+```python
+import logging
+logging.info(f"Penguin classified: {species_name} with confidence {confidence}")
+```
+
+### **Future Enhancement Ideas**
+
+**Model Improvements:**
+- **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data
+- **Explainable AI Features**: Interactive model card, training process visualization, performance metrics dashboard
+
+**Production Features:**
+- **API Authentication**: JWT tokens, rate limiting, user management
+- **Advanced Analytics**: Usage tracking, prediction patterns, A/B testing
+
+---
+
+## �📖 Conclusion
 
 This penguin species classifier demonstrates a complete modern web application architecture, combining machine learning, cloud computing, and responsive web design. The system showcases:
 
