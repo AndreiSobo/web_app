@@ -43,10 +43,10 @@ This project demonstrates end-to-end machine learning deployment using Azure clo
 
 ### **Current Architecture (Simplified)**
 ```
-┌─────────────────┐    ├── HTTPS ──┤    ┌──────────────────┐    ├── ML ──┤    ┌─────────────┐
-│   Web Browser   │ ── │Request   │ ── │ Azure Function   │ ── │Model │ ── │ Prediction  │
-│  (Static App)   │    │          │    │ (Python 3.9)    │    │      │    │  Response   │
-└─────────────────┘    └──────────┘    └──────────────────┘    └──────┘    └─────────────┘
+┌─────────────────┐    ├── HTTPS ──┤    ┌──────────────────┐    ├── ML ─┤    ┌─────────────┐
+│   Web Browser   │ ── │  Request  │ ── │ Azure Function   │ ── │ Model │ ── │ Prediction  │
+│  (Static App)   │    │           │    │ (Python 3.9)     │    │       │    │  Response   │
+└─────────────────┘    └───────────┘    └──────────────────┘    └───────┘    └─────────────┘
 ```
 
 ### **Components**
@@ -251,10 +251,8 @@ func host start
 
 ## 📚 **Documentation**
 
-### **Technical Documentation**
-- **[📖 Complete Technical Deep Dive](TECHNICAL_OVERVIEW.md)** - Comprehensive system architecture and data flow analysis for academic/professional presentations
-- **[📱 Mobile Optimization Guide](MOBILE_OPTIMIZATION.md)** - Mobile responsiveness implementation details
-- **[🚀 Deployment Guide](DEPLOYMENT.md)** - Azure deployment and configuration instructions
+### **Additional Documentation**
+- **[Technical Overview](documentation/TECHNICAL_OVERVIEW.md)** - Complete system architecture, API reference, and implementation details for academic/professional presentations
 
 ### **Learning Outcomes**
 
