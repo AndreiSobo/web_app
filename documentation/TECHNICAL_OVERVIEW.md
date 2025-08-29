@@ -642,7 +642,7 @@ curl -X POST https://penguin-classifier-function.azurewebsites.net/api/classifyp
 
 ---
 
-## � Key Concepts Explained
+## 🔑 Key Concepts Explained
 
 ### **CORS (Cross-Origin Resource Sharing)**
 
