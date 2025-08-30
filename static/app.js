@@ -63,16 +63,16 @@ document.addEventListener('DOMContentLoaded', function () {
         // For demonstration purposes, use mock data when API is not available
         // In production, this would be the actual API call
         const useMockData = false; // Set to false when actual API is available
-        
+
         if (useMockData) {
             // Simulate API delay
             setTimeout(() => {
                 const mockResponse = {
                     prediction: "Adelie",
-                    confidence: 0.87,
+                    confidence: 0.00,
                     top_features: [
-                        {"name": "culmen-depth", "impact": 0.1362},
-                        {"name": "flipper-length", "impact": -0.1279}
+                        { "name": "culmen-depth", "impact": 0.0 },
+                        { "name": "flipper-length", "impact": -0.0 }
                     ],
                     force_plot_url: "https://via.placeholder.com/600x200/e3f2fd/2196f3?text=SHAP+Force+Plot+%28Demo%29"
                 };
@@ -135,10 +135,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Handle top features for XAI (with fallback to placeholder data)
         const topFeatures = data.top_features || [
-            {"name": "culmen-depth", "impact": 0.1362},
-            {"name": "flipper-length", "impact": -0.1279}
+            { "name": "culmen-depth", "impact": 0.1362 },
+            { "name": "flipper-length", "impact": -0.1279 }
         ];
-        
+
         const forcePlotUrl = data.force_plot_url || "https://via.placeholder.com/600x200/f8f9fa/6c757d?text=SHAP+Force+Plot+Placeholder";
 
         outputValue.innerHTML = `
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function toggleXAICard() {
     const xaiBody = document.getElementById('xai-body');
     const xaiArrow = document.getElementById('xai-arrow');
-    
+
     if (xaiBody.style.display === 'none') {
         xaiBody.style.display = 'block';
         xaiArrow.textContent = '▲';
