@@ -155,11 +155,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="xai-card-body" id="xai-body" style="display: none;">
                     <p class="xai-explanation">
-                        The model has been trained on 3 classes, therefore each has a 33% chance of being the predicted class. 
-                        The features of the model influence that decision, and the 2 most influential features are: 
+                        The model was trained to distinguish between 3 penguin species based on physical characteristics. 
+                        The features of the model influence its decision, and the 2 most influential features are: 
                         <strong>${topFeatures[0].name}</strong> with a <strong>${topFeatures[0].impact.toFixed(4)}</strong> contribution 
                         and <strong>${topFeatures[1].name}</strong> with a <strong>${topFeatures[1].impact.toFixed(4)}</strong> contribution. 
-                        These, together with the other 2 features arrived at the confidence score of <strong>${(confidence * 100).toFixed(2)}%</strong>.
+                        These, together with the other 2 features, contributed to the confidence score of <strong>${(confidence * 100).toFixed(2)}%</strong>.
                     </p>
                     <div class="xai-plot-container">
                         <h6>SHAP Force Plot</h6>
