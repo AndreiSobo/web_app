@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             <!-- Explainable AI Card -->
             <div class="xai-card mt-3" id="xai-card">
-                <div class="xai-card-header" onclick="toggleXAICard()">
+                <div class="xai-card-header" id="xai-card-header" tabindex="0" role="button" aria-expanded="false">
                     <span class="xai-card-title">🧠 Want to know more? Try Explainable AI</span>
                     <span class="xai-card-arrow" id="xai-arrow">▼</span>
                 </div>
