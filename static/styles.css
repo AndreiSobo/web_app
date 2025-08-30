@@ -411,6 +411,150 @@ h1 {
     }
 }
 
+/* ==========================================================================
+   Explainable AI Card Styles - Mobile First
+   ========================================================================== */
+
+/* XAI Card - Main container */
+.xai-card {
+    margin-top: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    background: white;
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--box-shadow);
+}
+
+.xai-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* XAI Card Header - Clickable trigger */
+.xai-card-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 48px; /* Touch target minimum */
+}
+
+.xai-card-header:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+}
+
+.xai-card-header:active {
+    transform: scale(0.98);
+}
+
+/* XAI Card Title */
+.xai-card-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* XAI Card Arrow */
+.xai-card-arrow {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+    font-weight: bold;
+}
+
+/* XAI Card Body - Collapsible content */
+.xai-card-body {
+    padding: 1rem;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* XAI Explanation Text */
+.xai-explanation {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--dark-gray);
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
+
+.xai-explanation strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* SHAP Plot Container */
+.xai-plot-container {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 1rem;
+}
+
+.xai-plot-container h6 {
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* SHAP Plot Image */
+.xai-plot-image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    display: block;
+}
+
+/* Mobile optimizations for XAI card */
+@media (max-width: 576px) {
+    .xai-card-header {
+        padding: 0.75rem;
+    }
+    
+    .xai-card-body {
+        padding: 0.75rem;
+    }
+    
+    .xai-card-title {
+        font-size: 0.9rem;
+    }
+    
+    .xai-explanation {
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet and desktop enhancements */
+@media (min-width: 768px) {
+    .xai-card {
+        margin-top: 1.5rem;
+    }
+    
+    .xai-card-header {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .xai-card-body {
+        padding: 1.5rem;
+    }
+    
+    .xai-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .xai-explanation {
+        font-size: 1rem;
+    }
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .card {
