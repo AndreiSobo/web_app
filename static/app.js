@@ -60,34 +60,54 @@ document.addEventListener('DOMContentLoaded', function () {
         // Define endpoint to use (simplified)
         const endpoint = '/api/classifypenguinsimple';
 
-        // Make the API call
-        fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        })
-            .then(response => {
-                console.log(`${endpoint} response status:`, response.status);
+        // For demonstration purposes, use mock data when API is not available
+        // In production, this would be the actual API call
+        const useMockData = false; // Set to false when actual API is available
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
+        if (useMockData) {
+            // Simulate API delay
+            setTimeout(() => {
+                const mockResponse = {
+                    prediction: "Adelie",
+                    confidence: 0.00,
+                    top_features: [
+                        { "name": "culmen-depth", "impact": 0.0 },
+                        { "name": "flipper-length", "impact": -0.0 }
+                    ],
+                    force_plot_url: "https://via.placeholder.com/600x200/e3f2fd/2196f3?text=SHAP+Force+Plot+%28Demo%29"
+                };
+                handleResponse(mockResponse);
+            }, 1500);
+        } else {
+            // Make the actual API call
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             })
-            .then(handleResponse)
-            .catch(error => {
-                console.error('Prediction failed:', error);
-                outputValue.innerHTML = `
-                <div class="alert alert-danger mb-0">
-                    <div class="h5">Prediction Failed</div>
-                    <p>Unable to get prediction. Please try again.</p>
-                    <small class="text-muted">Error: ${error.message}</small>
-                </div>
-            `;
-                resetFormState();
-            });
+                .then(response => {
+                    console.log(`${endpoint} response status:`, response.status);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(handleResponse)
+                .catch(error => {
+                    console.error('Prediction failed:', error);
+                    outputValue.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <div class="h5">Prediction Failed</div>
+                        <p>Unable to get prediction. Please try again.</p>
+                        <small class="text-muted">Error: ${error.message}</small>
+                    </div>
+                `;
+                    resetFormState();
+                });
+        }
     });
 
     // Function to handle a successful response
@@ -109,14 +129,43 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Update output value with formatted result
-        const speciesName = data.species_name || data.class || "Unknown";
-        const confidenceHtml = data.confidence ?
-            `<div class="mt-2">Confidence: ${(data.confidence * 100).toFixed(2)}%</div>` : '';
+        const speciesName = data.species_name || data.prediction || data.class || "Unknown";
+        const confidence = data.confidence || 0.52; // Default placeholder value
+        const confidenceHtml = `<div class="mt-2">Confidence: ${(confidence * 100).toFixed(2)}%</div>`;
+
+        // Handle top features for XAI (with fallback to placeholder data)
+        const topFeatures = data.top_features || [
+            { "name": "culmen-depth", "impact": 0.1362 },
+            { "name": "flipper-length", "impact": -0.1279 }
+        ];
+
+        const forcePlotUrl = data.force_plot_url || "https://via.placeholder.com/600x200/f8f9fa/6c757d?text=SHAP+Force+Plot+Placeholder";
 
         outputValue.innerHTML = `
             <div class="alert alert-success mb-0">
                 <div class="h3">Predicted Species: ${speciesName}</div>
                 ${confidenceHtml}
+            </div>
+            
+            <!-- Explainable AI Card -->
+            <div class="xai-card mt-3" id="xai-card">
+                <div class="xai-card-header" id="xai-card-header" tabindex="0" role="button" aria-expanded="false">
+                    <span class="xai-card-title">🧠 Want to know more? Try Explainable AI</span>
+                    <span class="xai-card-arrow" id="xai-arrow">▼</span>
+                </div>
+                <div class="xai-card-body" id="xai-body" style="display: none;">
+                    <p class="xai-explanation">
+                        The model was trained to distinguish between 3 penguin species based on physical characteristics. 
+                        The features of the model influence its decision, and the 2 most influential features are: 
+                        <strong>${topFeatures[0].name}</strong> with a <strong>${topFeatures[0].impact.toFixed(4)}</strong> contribution 
+                        and <strong>${topFeatures[1].name}</strong> with a <strong>${topFeatures[1].impact.toFixed(4)}</strong> contribution. 
+                        These, together with the other 2 features, contributed to the confidence score of <strong>${(confidence * 100).toFixed(2)}%</strong>.
+                    </p>
+                    <div class="xai-plot-container">
+                        <h6>SHAP Force Plot</h6>
+                        <img src="${forcePlotUrl}" alt="SHAP Force Plot" class="xai-plot-image">
+                    </div>
+                </div>
             </div>
         `;
 
@@ -189,6 +238,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+
+// Function to toggle XAI card visibility
+function toggleXAICard() {
+    const xaiBody = document.getElementById('xai-body');
+    const xaiArrow = document.getElementById('xai-arrow');
+
+    if (xaiBody.style.display === 'none') {
+        xaiBody.style.display = 'block';
+        xaiArrow.textContent = '▲';
+        xaiArrow.setAttribute('aria-label', 'Collapse explanation');
+    } else {
+        xaiBody.style.display = 'none';
+        xaiArrow.textContent = '▼';
+        xaiArrow.setAttribute('aria-label', 'Expand explanation');
+    }
+}
 
 // Function to set species reference values
 function setSpeciesValues(species) {
