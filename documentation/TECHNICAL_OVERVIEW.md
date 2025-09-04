@@ -113,7 +113,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 ## 🔄 Function Lifecycle
 
 ### Cold Start Process (First Request)
-1. **Instance Creation**: Azure provisions compute instance (~2-3 seconds)
+1. **Instance Creation**: Azure provisions compute instance (~5-10 seconds)
 2. **Runtime Loading**: Python environment setup (~1 second)
 3. **Model Loading**: Load and cache ML model (~1-2 seconds)
 4. **Request Processing**: Handle the actual request (~100ms)
@@ -149,7 +149,7 @@ if req.method == "OPTIONS":
 ```
 
 ### Alternative Approach
-Azure Static Web Apps automatically handles CORS for linked functions, eliminating the need for manual CORS configuration when properly integrated.
+Azure Static Web Apps automatically handles CORS for linked functions, eliminating the need for manual CORS configuration when properly integrated. Consider relying on this feature if your frontend and backend are both deployed within Azure Static Web Apps and are properly linked.
 
 ## 💻 Local Development
 
@@ -303,7 +303,7 @@ curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypengu
 ## 🚀 Future Enhancement Ideas
 
 ### Model Improvements
-- **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data
+- **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data. The new penguin data can be inputs from users: examples they search for. The training can be done on Azure.
 - **Explainable AI Features**: Interactive model card, training process visualization, performance metrics dashboard
 
 ### Production Features
@@ -317,8 +317,7 @@ curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypengu
 2. **Azure CLI**: Deploy manually using `az staticwebapp create`
 
 **Architecture Choice:** 
-- **Current**: Serverless (Azure Functions + Static Web Apps) - <1s response, ~$0.001/prediction
-- **Previous**: Docker containers - discarded due to high cost (~$0.50/prediction) and slow response (2-5 minutes)
+Serverless (Azure Functions + Static Web Apps) - <1s 
 
 ## 🎯 Implementation Pattern Summary
 
@@ -328,8 +327,6 @@ This architecture demonstrates:
 3. **Static Web App Integration**: Seamless frontend-backend communication
 4. **Cost-Effective Scaling**: Pay-per-use pricing model
 5. **Modern Web Standards**: CORS handling, REST API design
-
-Use this pattern for similar ML web applications requiring fast, scalable, and cost-effective deployment.
 
 ## 📖 Conclusion
 
@@ -342,10 +339,10 @@ This penguin species classifier demonstrates a complete modern web application a
 - **Maintainability**: Clean code structure with comprehensive documentation
 
 **Performance Metrics:**
-- **Response Time**: <1 second
+- **Response Time**: <~12 seconds for cold start, less than 1 second for warm start 
 - **Prediction Accuracy**: >97% on test dataset
-- **Deployment Cost**: <$10/month for moderate usage
+- **Deployment Cost**: Currently within the free consumption plan. Can scale to $5 monthly.
 - **Scalability**: Supports thousands of concurrent users
-- **Availability**: 99.9% uptime SLA
+- **Availability**: 99.9% uptime Service Level Agreement
 
-This project exemplifies the integration of modern web technologies, cloud infrastructure, and machine learning to create a valuable, production-ready application suitable for educational, research, or commercial applications.
+This project showcases the integration of modern web technologies, cloud infrastructure, and machine learning to create a production-ready application.
