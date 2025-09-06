@@ -20,6 +20,85 @@
             </div>
         </div>
 
+        <!-- Project Information Cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="info-cards-container">
+                    <!-- What Card -->
+                    <div class="info-card" id="what-card">
+                        <div class="info-card-header" onclick="toggleInfoCard('what')" tabindex="0" role="button" aria-expanded="false">
+                            <span class="info-card-title">💡 What</span>
+                            <span class="info-card-arrow" id="what-arrow">▼</span>
+                        </div>
+                        <div class="info-card-body" id="what-body" style="display: none;">
+                            <h6>What This Project Does</h6>
+                            <p>This project demonstrates end-to-end machine learning deployment using Azure cloud services. It classifies penguin species (Adelie, Chinstrap, or Gentoo) based on four physical measurements using a production-ready web application.</p>
+                            <ul>
+                                <li><strong>Real-time ML Predictions:</strong> Instant species classification from penguin measurements</li>
+                                <li><strong>Cloud-Native Architecture:</strong> Fully serverless deployment on Azure platform</li>
+                                <li><strong>Interactive Web Interface:</strong> User-friendly form with immediate results display</li>
+                                <li><strong>Enterprise-Grade API:</strong> RESTful endpoint for programmatic access</li>
+                            </ul>
+                            <p><strong>Performance:</strong> <1 second response time, ~$0.001 per prediction</p>
+                        </div>
+                    </div>
+
+                    <!-- How Card -->
+                    <div class="info-card" id="how-card">
+                        <div class="info-card-header" onclick="toggleInfoCard('how')" tabindex="0" role="button" aria-expanded="false">
+                            <span class="info-card-title">⚙️ How</span>
+                            <span class="info-card-arrow" id="how-arrow">▼</span>
+                        </div>
+                        <div class="info-card-body" id="how-body" style="display: none;">
+                            <h6>How It Works - Technical Implementation</h6>
+                            <p><strong>System Architecture & Data Flow:</strong></p>
+                            <p class="text-center mb-3"><em>User Input → Frontend Validation → HTTP Request → Azure Function → Pre-trained ML Model → JSON Response → Web Display</em></p>
+                            <p>This project achieves real-time penguin species classification by attaching a <strong>pre-trained Random Forest classifier scikit-learn model</strong> to an <strong>Azure Function</strong>. The function is triggered via HTTP request, and once the model generates an output, it is displayed to the user via the web interface.</p>
+                            <ol>
+                                <li><strong>User Interaction:</strong> User enters penguin measurements via web interface</li>
+                                <li><strong>Data Processing:</strong> JavaScript validates and normalizes input data</li>
+                                <li><strong>HTTP Trigger:</strong> POST request sent to Azure Function endpoint</li>
+                                <li><strong>Model Inference:</strong> Pre-trained Random Forest classifier processes the features</li>
+                                <li><strong>Response Generation:</strong> Function returns JSON with species prediction and confidence</li>
+                                <li><strong>Result Display:</strong> Web interface updates with classification results</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Why Card -->
+                    <div class="info-card" id="why-card">
+                        <div class="info-card-header" onclick="toggleInfoCard('why')" tabindex="0" role="button" aria-expanded="false">
+                            <span class="info-card-title">🎯 Why</span>
+                            <span class="info-card-arrow" id="why-arrow">▼</span>
+                        </div>
+                        <div class="info-card-body" id="why-body" style="display: none;">
+                            <h6>Why This Project Matters</h6>
+                            <p>This project showcases the use of <strong>cloud infrastructure</strong>, <strong>machine learning practices</strong>, and <strong>Azure platform integration</strong> to create an end-to-end solution.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">🌥️ Cloud Infrastructure</h6>
+                                    <ul>
+                                        <li>Serverless Computing with Azure Functions</li>
+                                        <li>Static Web Apps for cost-effective hosting</li>
+                                        <li>Auto-scaling and pay-per-use model</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">🤖 ML Best Practices</h6>
+                                    <ul>
+                                        <li>Efficient model serving and caching</li>
+                                        <li>RESTful API design</li>
+                                        <li>Explainable AI with confidence scoring</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <p><strong>Azure Platform Integration:</strong> Demonstrates comprehensive Azure ecosystem usage including Static Web Apps, Azure Functions, Application Insights, and automated deployment pipelines via GitHub Actions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12">
                 <div class="card shadow">

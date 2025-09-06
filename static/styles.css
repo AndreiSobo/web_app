@@ -593,3 +593,173 @@ h1 {
         color: #e0e0e0;
     }
 }
+
+/* ==========================================================================
+   Information Cards Styles - Mobile First
+   ========================================================================== */
+
+/* Info Cards Container */
+.info-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Individual Info Card */
+.info-card {
+    border: 1px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    background: white;
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--box-shadow);
+}
+
+.info-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Info Card Header - Clickable trigger */
+.info-card-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    border-bottom: 1px solid #e0e0e0;
+    min-height: 48px; /* Touch target minimum */
+}
+
+.info-card-header:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+}
+
+.info-card-header:active {
+    transform: scale(0.98);
+}
+
+/* Info Card Title */
+.info-card-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Info Card Arrow */
+.info-card-arrow {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    transition: transform 0.3s ease;
+    font-weight: bold;
+}
+
+/* Info Card Body - Collapsible content */
+.info-card-body {
+    padding: 1.5rem;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+}
+
+.info-card-body h6 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.info-card-body p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--dark-gray);
+    margin-bottom: 1rem;
+}
+
+.info-card-body ul {
+    margin-bottom: 1rem;
+}
+
+.info-card-body li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.info-card-body ol {
+    margin-bottom: 1rem;
+}
+
+.info-card-body ol li {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.info-card-body strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Tablet and desktop optimizations */
+@media (min-width: 768px) {
+    .info-cards-container {
+        flex-direction: row;
+        gap: 1.5rem;
+    }
+    
+    .info-card {
+        flex: 1;
+    }
+    
+    .info-card-header {
+        padding: 1.25rem;
+    }
+    
+    .info-card-body {
+        padding: 1.75rem;
+    }
+    
+    .info-card-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* Mobile optimizations for info cards */
+@media (max-width: 576px) {
+    .info-card-header {
+        padding: 0.75rem;
+    }
+    
+    .info-card-body {
+        padding: 1rem;
+    }
+    
+    .info-card-title {
+        font-size: 1rem;
+    }
+}
+
+/* Dark mode support for info cards */
+@media (prefers-color-scheme: dark) {
+    .info-card {
+        background-color: #2c2c2c;
+        border-color: #555;
+    }
+    
+    .info-card-header {
+        background: linear-gradient(135deg, #3c3c3c, #4a4a4a);
+    }
+    
+    .info-card-body {
+        background-color: #2c2c2c;
+        color: #e0e0e0;
+    }
+    
+    .info-card-body p {
+        color: #d0d0d0;
+    }
+}

@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
         initializeMobileFeatures();
     }
 
+    // Initialize info card keyboard accessibility
+    initializeInfoCardAccessibility();
+
     // Initially hide the loading indicator
     loading.style.display = 'none';
 
@@ -300,5 +303,54 @@ function setSpeciesValues(species) {
                 <p>Click "Classify Penguin Species" to test the prediction</p>
             </div>
         `;
+    }
+}
+
+// Function to initialize info card keyboard accessibility
+function initializeInfoCardAccessibility() {
+    const infoCardHeaders = document.querySelectorAll('.info-card-header');
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    infoCardHeaders.forEach(header => {
+        header.addEventListener('keydown', function(e) {
+            // Handle Enter and Space key presses
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                // Extract card type from the header's parent id
+                const cardId = this.parentElement.id;
+                const cardType = cardId.replace('-card', '');
+                toggleInfoCard(cardType);
+            }
+        });
+        
+        // Add touch feedback for mobile
+        if (isTouchDevice) {
+            header.addEventListener('touchstart', function() {
+                this.style.opacity = '0.8';
+            }, { passive: true });
+            
+            header.addEventListener('touchend', function() {
+                this.style.opacity = '1';
+            }, { passive: true });
+        }
+    });
+}
+
+// Function to toggle information card visibility
+function toggleInfoCard(cardType) {
+    const cardBody = document.getElementById(`${cardType}-body`);
+    const cardArrow = document.getElementById(`${cardType}-arrow`);
+    const cardHeader = document.querySelector(`#${cardType}-card .info-card-header`);
+
+    if (cardBody.style.display === 'none') {
+        cardBody.style.display = 'block';
+        cardArrow.textContent = '▲';
+        cardArrow.setAttribute('aria-label', `Collapse ${cardType} explanation`);
+        cardHeader.setAttribute('aria-expanded', 'true');
+    } else {
+        cardBody.style.display = 'none';
+        cardArrow.textContent = '▼';
+        cardArrow.setAttribute('aria-label', `Expand ${cardType} explanation`);
+        cardHeader.setAttribute('aria-expanded', 'false');
     }
 }
