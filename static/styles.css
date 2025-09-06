@@ -706,6 +706,7 @@ h1 {
 
 /* Tablet and desktop optimizations */
 @media (min-width: 768px) {
+    /* Keep vertical layout for better UX - cards don't expand together
     .info-cards-container {
         flex-direction: row;
         gap: 1.5rem;
@@ -714,6 +715,7 @@ h1 {
     .info-card {
         flex: 1;
     }
+    */
     
     .info-card-header {
         padding: 1.25rem;
