@@ -3,7 +3,42 @@
 ## Executive Summary
 
 This document provides a comprehensive technical explanation of the Penguin Species Classifier web application, detailing the complete data flow from user input to machine learning prediction and result display.
-## 🏗️ System Architecture Overview
+## � Azure Functions Programming Model
+
+### v2 Programming Model (Current Implementation)
+
+This project uses the **Azure Functions v2 Programming Model** which provides several advantages over the traditional v1 model:
+
+#### Key Features:
+- **Code-First Approach**: Function triggers and bindings are defined using Python decorators
+- **Blueprint Architecture**: Functions are organized into logical blueprints for better code organization
+- **Simplified Development**: No need to manage separate `function.json` configuration files
+- **Better Tooling**: Enhanced IntelliSense and type safety with Python type hints
+- **Centralized Registration**: All functions registered in a single `__init__.py` file
+
+#### Migration Benefits:
+- **Reduced Configuration**: Eliminated 20+ lines of JSON configuration per function
+- **Improved Maintainability**: Function definition and configuration in the same file
+- **Enhanced Developer Experience**: Better debugging and development workflow
+- **Future-Proof**: Microsoft's recommended approach for new Azure Functions projects
+
+#### Comparison:
+```python
+# v1 Model (deprecated approach)
+# Required function.json + separate Python file
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    # Function logic here
+    pass
+
+# v2 Model (current implementation)
+# Single Python file with decorator
+@bp.route(route="ClassifyPenguinSimple", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
+def classify(req: func.HttpRequest) -> func.HttpResponse:
+    # Function logic here
+    pass
+```
+
+## �🏗️ System Architecture Overview
 
 ### High-Level Data Flow
 
@@ -49,10 +84,29 @@ fetch('/api/classifypenguinsimple', {
 });
 ```
 
-### Backend Processing (`function_app/ClassifyPenguinSimple/__init__.py`)
+### Backend Processing (v2 Programming Model)
 
-#### Model Loading Strategy
+#### Application Setup (`function_app/__init__.py`)
 ```python
+import azure.functions as func
+
+# Create the v2 Function App instance
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
+
+# Register blueprints/endpoints
+from .ClassifyPenguinSimple import bp as classify_bp
+app.register_functions(classify_bp)
+```
+
+#### Function Blueprint (`function_app/ClassifyPenguinSimple/__init__.py`)
+
+##### Model Loading Strategy
+```python
+import azure.functions as func
+
+# Create blueprint for function registration
+bp = func.Blueprint()
+
 # Global variable for model caching (critical for performance)
 _model = None
 
@@ -65,16 +119,22 @@ def load_model():
     return _model
 ```
 
-#### Request Processing Pipeline
+##### Request Processing Pipeline
 ```python
-def main(req: func.HttpRequest) -> func.HttpResponse:
+@bp.route(route="ClassifyPenguinSimple", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+def classify(req: func.HttpRequest) -> func.HttpResponse:
     # 1. Handle CORS
     headers = {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "Content-Type"
     }
     
+    # Handle OPTIONS request for CORS preflight
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers=headers)
+    
     # 2. Validate input
+    req_body = req.get_json()
     features = req_body.get('features', [])
     if len(features) != 4:
         return func.HttpResponse("Invalid features", status_code=400)
@@ -153,11 +213,28 @@ Azure Static Web Apps automatically handles CORS for linked functions, eliminati
 
 ## 💻 Local Development
 
-### Running Functions Locally
+### Running Functions Locally (v2 Programming Model)
 ```bash
 cd function_app
-func start  # Starts on http://localhost:7071
+# Activate virtual environment (if using one)
+source ../web_app_env/bin/activate
+# Start the functions host
+func host start  # Starts on http://localhost:7071
 ```
+
+### Project Structure for v2 Model
+```
+function_app/
+├── __init__.py              # Main app with blueprint registration
+├── function_app.py          # Entry point for v2 programming model
+├── host.json               # Host configuration with v2 extension bundle
+├── requirements.txt        # Python dependencies
+└── ClassifyPenguinSimple/
+    ├── __init__.py         # Blueprint with @bp.route decorator
+    └── penguins_model.pkl  # ML model file
+```
+
+**Note**: The v2 programming model no longer requires `function.json` files. Function configuration is handled through Python decorators and blueprints.
 
 ### Serving Static Files Locally
 ```bash
@@ -268,7 +345,11 @@ curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypengu
 ```json
 {
     "version": "2.0",
-    "functionTimeout": "00:05:00",  // 5-minute max execution time per request
+    "extensionBundle": {
+        "id": "Microsoft.Azure.Functions.ExtensionBundle",
+        "version": "[3.*, 4.0.0)"
+    },
+    "functionTimeout": "00:05:00",
     "logging": {
         "applicationInsights": {
             "samplingSettings": {
@@ -279,26 +360,19 @@ curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypengu
 }
 ```
 
-### Function Binding (`ClassifyPenguinSimple/function.json`)
-```json
-{
-    "scriptFile": "__init__.py",
-    "bindings": [
-        {
-            "authLevel": "anonymous",
-            "type": "httpTrigger",
-            "direction": "in",
-            "name": "req",
-            "methods": ["get", "post", "options"]
-        },
-        {
-            "type": "http",
-            "direction": "out",
-            "name": "$return"
-        }
-    ]
-}
-```
+### Azure Functions v2 Programming Model
+
+The application uses the **Azure Functions v2 Programming Model** which eliminates the need for `function.json` configuration files. Instead, functions are defined using:
+
+1. **Decorators**: `@bp.route()` decorators define HTTP triggers and routes
+2. **Blueprints**: Functions are organized into blueprints and registered with the main app
+3. **Centralized Configuration**: The main app configuration is handled in `__init__.py`
+
+#### Key Advantages of v2 Model:
+- **Simplified Structure**: No need for separate `function.json` files
+- **Code-First Approach**: Function configuration is defined in Python code
+- **Better IntelliSense**: Improved development experience with type hints
+- **Centralized Management**: All functions registered in a single location
 
 ## 🚀 Future Enhancement Ideas
 

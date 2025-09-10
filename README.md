@@ -59,10 +59,11 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
    - Real-time form validation and user feedback
    - Interactive results display with explainable AI features
 
-2. **Backend**: Azure Functions (Python 3.10)
-   - HTTP-triggered serverless function
+2. **Backend**: Azure Functions (Python 3.10) - **v2 Programming Model**
+   - HTTP-triggered serverless function using blueprints and decorators
    - Cached pre-trained scikit-learn Random Forest model
    - JSON API with CORS support for cross-origin requests
+   - Code-first approach eliminating `function.json` configuration files
 
 3. **Machine Learning**: Random Forest Classifier
    - Pre-trained on Palmer Penguins dataset (>97% accuracy)
@@ -91,12 +92,28 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 ```
 web_app/
 ├── static/                    # Frontend web application
-├── function_app/              # Azure Functions backend
-├── models/                    # ML model files
-├── notebooks/                 # Data science workflows
-├── data/                      # Training data
-└── documentation/             # Technical documentation
+│   ├── index.html            # Main web interface
+│   ├── app.js               # Frontend logic and API calls
+│   └── styles.css           # Styling and responsive design
+├── function_app/             # Azure Functions backend (v2 programming model)
+│   ├── __init__.py          # Main app with blueprint registration
+│   ├── function_app.py      # Entry point for v2 model
+│   ├── host.json           # Host configuration with v2 extension bundle
+│   ├── requirements.txt    # Python dependencies
+│   └── ClassifyPenguinSimple/
+│       ├── __init__.py     # Function blueprint with decorators
+│       └── penguins_model.pkl  # Pre-trained ML model
+├── models/                   # ML model files
+├── notebooks/               # Data science workflows
+├── data/                    # Training data
+└── documentation/           # Technical documentation
 ```
+
+**Key v2 Programming Model Features:**
+- No `function.json` files required
+- Function configuration via Python decorators
+- Blueprint-based organization
+- Centralized app registration
 
 ## 🧪 **Quick Testing**
 
@@ -151,10 +168,16 @@ Expected output:
 git clone https://github.com/AndreiSobo/web_app.git
 cd web_app
 
-# Local development
-cd function_app && func host start    # Start Azure Functions locally
+# Local development with v2 programming model
+cd function_app
+source ../web_app_env/bin/activate  # Activate virtual environment
+func host start                      # Start Azure Functions locally (v2 model)
+
+# In another terminal
 cd static && python -m http.server   # Serve static files
 ```
+
+**Note**: This project uses Azure Functions **v2 Programming Model** which uses decorators and blueprints instead of `function.json` configuration files.
 
 ### **Deployment**
 - **Automatic**: Push to GitHub triggers auto-deployment via GitHub Actions

@@ -1,33 +1,38 @@
 import logging
-import azure.functions as func
 import json
-import joblib
 import os
+from typing import Optional
+
+import azure.functions as func
+import joblib
 import numpy as np
-import requests
+
+bp = func.Blueprint()
 
 # Global variable to cache the model
-_model = None
+_model: Optional[object] = None
 
 def load_model():
     """Load the model once and cache it"""
     global _model
     if _model is None:
         try:
-            model_path = os.path.join(os.path.dirname(__file__), 'penguin_model.pkl')            
-            if model_path is None:
+            # file is named 'penguins_model.pkl' in repo
+            model_path = os.path.join(os.path.dirname(__file__), 'penguins_model.pkl')
+            if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model not found at: {model_path}")
-            
+
             _model = joblib.load(model_path)
-            logging.info(f"Model loaded successfully from {model_path}")
+            logging.info("Model loaded successfully from %s", model_path)
         except Exception as e:
-            logging.error(f"Error loading model: {str(e)}")
-            raise e
+            logging.exception("Error loading model: %s", e)
+            raise
     return _model
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
+@bp.route(route="ClassifyPenguinSimple", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
+def classify(req: func.HttpRequest) -> func.HttpResponse:
     """Simple penguin classification using pre-loaded model"""
-    logging.info('ClassifyPenguinSimple function processed a request.')
+    logging.info("ClassifyPenguinSimple function processed a request.")
     
     # CORS headers
     headers = {
@@ -92,24 +97,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if confidence is not None:
             response["confidence"] = confidence
 
-        # get hook on second function
-        second_function_url = os.environ()
-
-        # send "response dict to XAI func"
-        xai_response = requests.post(
-            second_function_url
-        )
-
-        
         return func.HttpResponse(
             json.dumps(response),
             status_code=200,
             headers=headers,
             mimetype="application/json"
         )
-        
     except Exception as e:
-        logging.error(f"Error in function: {str(e)}")
+        logging.exception("Error in function: %s", e)
         return func.HttpResponse(
             json.dumps({
                 "error": str(e),
