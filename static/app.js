@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Define endpoint to use (simplified)
         const endpoint = '/api/classifypenguinsimple';
 
-        // For demonstration purposes, use mock data when API is not available
         // In production, this would be the actual API call
         const useMockData = false; // Set to false when actual API is available
 
@@ -310,9 +309,9 @@ function setSpeciesValues(species) {
 function initializeInfoCardAccessibility() {
     const infoCardHeaders = document.querySelectorAll('.info-card-header');
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
+
     infoCardHeaders.forEach(header => {
-        header.addEventListener('keydown', function(e) {
+        header.addEventListener('keydown', function (e) {
             // Handle Enter and Space key presses
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -322,14 +321,14 @@ function initializeInfoCardAccessibility() {
                 toggleInfoCard(cardType);
             }
         });
-        
+
         // Add touch feedback for mobile
         if (isTouchDevice) {
-            header.addEventListener('touchstart', function() {
+            header.addEventListener('touchstart', function () {
                 this.style.opacity = '0.8';
             }, { passive: true });
-            
-            header.addEventListener('touchend', function() {
+
+            header.addEventListener('touchend', function () {
                 this.style.opacity = '1';
             }, { passive: true });
         }

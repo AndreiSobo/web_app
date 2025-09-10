@@ -4,6 +4,7 @@ import json
 import joblib
 import os
 import numpy as np
+import requests
 
 # Global variable to cache the model
 _model = None
@@ -13,21 +14,9 @@ def load_model():
     global _model
     if _model is None:
         try:
-            # Try multiple possible paths for the model
-            possible_paths = [
-                os.path.join(os.path.dirname(__file__), 'penguins_model.pkl'),  # Same directory as function
-                os.path.join(os.path.dirname(__file__), '..', 'models', 'penguins_model.pkl'),  # models folder
-                os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'penguins_model.pkl'),  # Original path
-            ]
-            
-            model_path = None
-            for path in possible_paths:
-                if os.path.exists(path):
-                    model_path = path
-                    break
-            
+            model_path = os.path.join(os.path.dirname(__file__), 'penguin_model.pkl')            
             if model_path is None:
-                raise FileNotFoundError(f"Model not found in any of these paths: {possible_paths}")
+                raise FileNotFoundError(f"Model not found at: {model_path}")
             
             _model = joblib.load(model_path)
             logging.info(f"Model loaded successfully from {model_path}")
@@ -102,6 +91,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         
         if confidence is not None:
             response["confidence"] = confidence
+
+        # get hook on second function
+        second_function_url = os.environ()
+
+        # send "response dict to XAI func"
+        xai_response = requests.post(
+            second_function_url
+        )
+
         
         return func.HttpResponse(
             json.dumps(response),
