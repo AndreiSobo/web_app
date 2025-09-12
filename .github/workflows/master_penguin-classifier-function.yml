@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'web_app/function_app'
-  AZURE_FUNCTION_NAME: "penguin-classifier-consumption"  # Replace with your Function App name from Azure Portal
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'function_app'
+  AZURE_FUNCTION_NAME: "penguin-classifier-consumption"
   PYTHON_VERSION: '3.10'
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: funcapp
-          path: web_app/release.zip
+          path: release.zip
 
 
   deploy:
