@@ -18,12 +18,12 @@ def load_model():
     if _model is None:
         try:
             # file is named 'penguins_model.pkl' in repo
-            model_path = os.path.join(os.path.dirname(__file__), 'penguins_model.pkl')
+            model_path = os.path.join(os.path.dirname(__file__), '../shared/penguins_model.pkl')
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model not found at: {model_path}")
 
             _model = joblib.load(model_path)
-            logging.info("Model loaded successfully from %s", model_path)
+            logging.info(f"Model loaded successfully from {model_path}")
         except Exception as e:
             logging.exception("Error loading model: %s", e)
             raise

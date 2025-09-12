@@ -11,7 +11,7 @@
             "methods": [
                 "POST"
             ],
-            "rewrite": "/api/ClassifyPenguin"
+            "rewrite": "/api/ClassifyPenguinSimple"
         },
         {
             "route": "/*",

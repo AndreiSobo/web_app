@@ -72,11 +72,9 @@ const payload = {
 
 #### API Communication
 ```javascript
-fetch('/api/classifypenguinsimple', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-})
+fetch('/api/ClassifyPenguinSimple', {
+  method: 'POST',
+  headers: {
 .then(response => response.json())
 .then(data => {
     // Handle prediction result
@@ -160,7 +158,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 {
   "routes": [
     {
-      "route": "/api/classifypenguinsimple",
+      "route": "/api/ClassifyPenguinSimple",
       "methods": ["POST"],
       "allowedRoles": ["anonymous"]
     }
@@ -243,12 +241,41 @@ python -m http.server 8080  # Starts on http://localhost:8080
 ```
 
 ### Local Development Configuration
+
+#### Starting Azure Functions Runtime
+The Azure Functions runtime must run in the background for local testing. Use this approach:
+
+```bash
+# Navigate to function directory and start runtime in background
+cd /home/andrei/git/web_app/function_app && nohup func host start > /tmp/func.log 2>&1 & sleep 3 && echo "Function started, testing now..."
+```
+
+**Command breakdown:**
+- `nohup` - Prevents termination when terminal closes
+- `func host start` - Starts Azure Functions runtime
+- `> /tmp/func.log 2>&1` - Captures all output for debugging
+- `&` - Runs process in background
+- `sleep 3` - Ensures runtime fully initializes
+
+#### Monitoring and Debugging
+```bash
+# Check function logs in real-time
+tail -f /tmp/func.log
+
+# Stop function runtime when done
+lsof -ti:7071 | xargs kill -9
+
+# Verify function is running
+curl -s http://localhost:7071/api/ClassifyPenguinSimple -X POST -H "Content-Type: application/json" -d '{}' -o /dev/null -w "Status: %{http_code}"
+```
+
+#### Frontend Configuration
 When running locally, update the API endpoint in `app.js`:
 ```javascript
 // For local development (modify as needed)
 const endpoint = 'http://localhost:7071/api/ClassifyPenguinSimple';
 // For production (current implementation)
-const endpoint = '/api/classifypenguinsimple';  // Routes through Static Web Apps
+const endpoint = '/api/ClassifyPenguinSimple';  // Routes through Static Web Apps
 ```
 
 ## 📊 Expected API Contract
@@ -321,7 +348,7 @@ logging.info(f"Penguin classified: {species_name} with confidence {confidence}")
 ### API Testing
 ```bash
 # Test API through Static Web App routing
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypenguinsimple \
+curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7, 18.1, 37.5]}'
 

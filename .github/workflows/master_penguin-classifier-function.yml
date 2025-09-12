@@ -12,7 +12,7 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'web_app/function_app'
-  AZURE_FUNCTION_NAME: "penguin-classifier-consump"
+  AZURE_FUNCTION_NAME: "penguin-classifier-consumption"  # Replace with your Function App name from Azure Portal
   PYTHON_VERSION: '3.10'
 
 jobs:
@@ -30,14 +30,12 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Validate Requirements and create venv
+      - name: Create virtual environment and install dependencies
         working-directory: ${{env.AZURE_FUNCTIONAPP_PACKAGE_PATH}}
         run: |
           python -m venv venv
           source venv/bin/activate
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          pip install -r requirements.txt
 
       # Optional: Add step to run tests here
 

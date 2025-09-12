@@ -17,7 +17,7 @@ Click "Use Values" buttons to quickly test with realistic species data!
 ### **Test the API Directly**
 ```bash
 # Test with Chinstrap penguin averages
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypenguinsimple \
+curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [47.5, 15.0, 21.7, 50.76]}'
 ```
@@ -48,7 +48,7 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 ### **Step-by-Step Process**
 1. **User Interaction**: User enters penguin measurements via web interface
 2. **Data Processing**: JavaScript validates and normalizes input data 
-3. **HTTP Trigger**: POST request sent to Azure Function endpoint (`/api/classifypenguinsimple`)
+3. **HTTP Trigger**: POST request sent to Azure Function endpoint (`/api/ClassifyPenguinSimple`)
 4. **Model Inference**: Pre-trained Random Forest classifier processes the features
 5. **Response Generation**: Function returns JSON with species prediction and confidence
 6. **Result Display**: Web interface updates with classification results and explanations
@@ -80,7 +80,7 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 
 ### **Live Application**
 - **Web Interface**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/
-- **API Endpoint**: https://penguin-classifier-function.azurewebsites.net/api/classifypenguinsimple
+- **API Endpoint**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple
 
 ### **Azure Resources**
 - **Static Web App**: Hosts frontend and routes API calls
@@ -115,19 +115,63 @@ web_app/
 - Blueprint-based organization
 - Centralized app registration
 
-## 🧪 **Quick Testing**
+## 🧪 **Testing**
 
-### **Web Interface Testing**
+### **Production Testing**
+
+#### **Web Interface**
 1. Visit: https://blue-wave-0b3a88b03.6.azurestaticapps.net/
 2. Enter penguin measurements or use the "Use Values" buttons
 3. Click "Classify Penguin Species" to see prediction results
 
-### **API Testing**
+#### **API Testing**
 ```bash
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/classifypenguinsimple \
+curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7, 18.1, 37.5]}'
 ```
+
+### **Local Development Testing**
+
+#### **Starting the Function Runtime**
+For local testing, the Azure Functions runtime needs to run in the background. Use this command:
+
+```bash
+cd /home/andrei/git/web_app/function_app && nohup func host start > /tmp/func.log 2>&1 & sleep 3 && echo "Function started, testing now..."
+```
+
+**Why this command works:**
+- `nohup` - Prevents process termination when terminal closes
+- `func host start` - Starts the Azure Functions runtime
+- `> /tmp/func.log 2>&1` - Redirects output to log file for debugging
+- `&` - Runs in background, freeing up terminal
+- `sleep 3` - Allows runtime to fully initialize before testing
+
+#### **Testing Local Function**
+Once the function is running, test with curl:
+
+```bash
+curl -X POST http://localhost:7071/api/ClassifyPenguinSimple \
+  -H "Content-Type: application/json" \
+  -d '{"features": [39.1, 18.7, 18.1, 37.5]}'
+```
+
+#### **Checking Function Logs**
+Monitor the function output:
+```bash
+tail -f /tmp/func.log
+```
+
+#### **Stopping Local Function**
+To stop the background function:
+```bash
+lsof -ti:7071 | xargs kill -9
+```
+
+#### **Common Issues**
+- **Connection refused**: Function not started or still initializing - wait a few seconds
+- **Port already in use**: Kill existing processes with the stop command above
+- **Import errors**: Ensure virtual environment is activated and dependencies installed
 
 Expected output:
 ```json

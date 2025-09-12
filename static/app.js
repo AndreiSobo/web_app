@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Sending request payload:', payload);
 
         // Define endpoint to use (simplified)
-        const endpoint = '/api/classifypenguinsimple';
+        const endpoint = '/api/ClassifyPenguinSimple';
 
         // In production, this would be the actual API call
         const useMockData = false; // Set to false when actual API is available
