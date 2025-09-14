@@ -80,7 +80,7 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 
 ### **Live Application**
 - **Web Interface**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/
-- **API Endpoint**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple
+- **API Endpoint**: https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple
 
 ### **Azure Resources**
 - **Static Web App**: Hosts frontend and routes API calls
@@ -126,9 +126,9 @@ web_app/
 
 #### **API Testing**
 ```bash
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
-  -d '{"features": [39.1, 18.7, 18.1, 37.5]}'
+  -d '{"features": [39.1, 18.7, 181, 3750]}'
 ```
 
 ### **Local Development Testing**
@@ -265,6 +265,48 @@ Showcases complete cloud solution development:
 - **Developer Experience**: Local development workflow with cloud deployment automation
 
 This project serves as a practical example of how to leverage Azure's cloud infrastructure to deploy machine learning models in a production-ready, cost-effective, and scalable manner.
+
+## 🚀 **Deployment**
+
+### **Azure Function Deployment**
+
+**Recommended Method: Azure CLI Direct Deployment**
+
+Due to authentication challenges with GitHub Actions in educational Azure accounts, we recommend using Azure CLI for function deployment:
+
+```bash
+# 1. Install Azure CLI (if not already installed)
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+# 2. Login to Azure
+az login
+
+# 3. Navigate to function directory and deploy
+cd function_app
+func azure functionapp publish penguin-classifier-consumption
+```
+
+**What the deployment does:**
+- Authenticates using your Azure CLI session
+- Performs remote build on Azure infrastructure
+- Installs Python dependencies from requirements.txt
+- Compresses and uploads function code
+- Configures function triggers and bindings
+- Activates the deployed function
+
+### **Static Web App Deployment**
+
+The frontend is automatically deployed via GitHub Actions when changes are pushed to the master branch. The workflow file `azure-static-web-apps-blue-wave-0b3a88b03.yml` handles this process.
+
+### **Deployment Architecture**
+
+```
+Frontend (Static Web App) → Direct API Call → Azure Function → ML Model → Response
+```
+
+**Note**: This project bypasses the typical Static Web App + Function integration due to deployment authentication issues, instead using direct function URLs in production.
+
+For detailed deployment troubleshooting and alternatives, see [`documentation/TECHNICAL_OVERVIEW.md`](documentation/TECHNICAL_OVERVIEW.md#-deployment-strategies-and-lessons-learned).
 
 ## 🤝 **Contributing**
 

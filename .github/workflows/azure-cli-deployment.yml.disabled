@@ -1,0 +1,53 @@
+name: Azure Function App - CLI Deployment
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'function_app'
+  AZURE_FUNCTION_NAME: "penguin-classifier-consumption"
+  PYTHON_VERSION: '3.10'
+  AZURE_RESOURCE_GROUP: 'rg-cours'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create virtual environment and install dependencies
+        working-directory: ${{env.AZURE_FUNCTIONAPP_PACKAGE_PATH}}
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create deployment package
+        working-directory: ${{env.AZURE_FUNCTIONAPP_PACKAGE_PATH}}
+        run: |
+          zip -r ../deployment.zip . -x ".venv/*" "__pycache__/*" "*.pyc" ".git/*"
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Functions
+        run: |
+          az functionapp deployment source config-zip \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_FUNCTION_NAME }} \
+            --src deployment.zip

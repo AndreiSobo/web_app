@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Sending request payload:', payload);
 
-        // Define endpoint to use (simplified)
-        const endpoint = '/api/ClassifyPenguinSimple';
+        // Define endpoint to use - pointing to deployed Azure Function
+        const endpoint = 'https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple';
 
         // In production, this would be the actual API call
         const useMockData = false; // Set to false when actual API is available

@@ -401,6 +401,146 @@ The application uses the **Azure Functions v2 Programming Model** which eliminat
 - **Better IntelliSense**: Improved development experience with type hints
 - **Centralized Management**: All functions registered in a single location
 
+## 🚀 Deployment Strategies and Lessons Learned
+
+### GitHub Actions Deployment Challenges
+
+During the development of this project, we encountered significant challenges deploying Azure Functions via GitHub Actions, which provides valuable insights for future projects.
+
+#### Attempted Methods and Their Failures
+
+##### Method 1: Publish Profile Authentication
+**Approach**: Using Azure Function App publish profile for authentication
+```yaml
+- name: Deploy to Azure Functions
+  uses: Azure/functions-action@v1
+  with:
+    app-name: ${{env.AZURE_FUNCTION_NAME}}
+    package: .
+    publish-profile: ${{secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CONS}}
+```
+
+**Issue Encountered**: 
+- Error: `Failed to fetch Kudu App Settings. Unauthorized (CODE: 401)`
+- Root Cause: Authentication failures with SCM endpoint despite valid publish profile
+- Multiple Action versions tested (v1, v1.5.2) - all failed
+
+##### Method 2: Azure CLI with Service Principal
+**Approach**: Using Azure CLI with service principal authentication
+```yaml
+- name: Azure Login
+  uses: azure/login@v1
+  with:
+    creds: ${{ secrets.AZURE_CREDENTIALS }}
+```
+
+**Issue Encountered**:
+- Error: `Insufficient privileges to complete the operation`
+- Root Cause: Educational Azure accounts lack permission to create service principals
+- Command failed: `az ad sp create-for-rbac --name "github-actions-sp"`
+
+#### Successful Solution: Direct Azure CLI Deployment
+
+**Working Method**: Local deployment using Azure Functions Core Tools
+
+##### Prerequisites Installation
+```bash
+# Install Azure CLI (Ubuntu/Debian)
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+# Login to Azure
+az login
+```
+
+##### Deployment Command
+```bash
+cd function_app
+func azure functionapp publish penguin-classifier-consumption
+```
+
+**What This Command Does**:
+1. **Authentication**: Uses your logged-in Azure CLI credentials
+2. **Build Process**: Performs remote build on Azure using Oryx build system
+3. **Dependency Management**: Installs Python packages from requirements.txt on Azure
+4. **Code Upload**: Compresses and uploads your function code
+5. **Configuration**: Applies function app settings and triggers
+6. **Activation**: Restarts the function app with new code
+
+##### Deployment Process Breakdown
+```bash
+# 1. Site Publishing Info Retrieval
+Getting site publishing info...
+
+# 2. Remote Build Initiation  
+Performing remote build for functions project.
+Running oryx build... # Azure's build system
+
+# 3. Python Environment Setup
+Python Version: /tmp/oryx/platforms/python/3.10.4/bin/python3.10
+Running pip install... # Installs from requirements.txt
+
+# 4. Package Creation
+Creating a squashfs file # Compressed filesystem for Linux consumption
+
+# 5. Function Registration
+Syncing triggers...
+Functions in penguin-classifier-consumption:
+    classify - [httpTrigger]
+```
+
+#### Key Advantages of Azure CLI Deployment
+
+| Aspect | GitHub Actions | Azure CLI Direct |
+|--------|----------------|------------------|
+| **Authentication** | Complex (publish profile/service principal) | Simple (az login) |
+| **Permissions** | Requires specific AD permissions | Uses existing user permissions |
+| **Debugging** | Limited error visibility | Full deployment logs |
+| **Setup Complexity** | High (secrets, workflows) | Minimal |
+| **Educational Accounts** | Often fails due to restrictions | Usually works |
+| **Deployment Speed** | ~5-8 minutes (if working) | ~3-4 minutes |
+
+#### Lessons Learned for Future Projects
+
+##### When to Use Each Method
+
+**Use GitHub Actions When**:
+- You have full administrative access to Azure AD
+- Working in enterprise environments with proper service principals
+- Need automated CI/CD pipelines
+- Multiple developers deploying regularly
+
+**Use Azure CLI Direct When**:
+- Working with educational Azure accounts
+- Personal projects with single developer
+- Need quick deployment without CI/CD setup
+- Troubleshooting deployment issues
+
+##### Best Practices for Azure Function Deployment
+
+1. **Start with Azure CLI**: Always test local deployment first
+2. **Validate Permissions**: Check `az functionapp list` before attempting automated deployment
+3. **Monitor Build Logs**: Watch for dependency conflicts during remote build
+4. **Test Both URLs**: Azure Functions may show different case in URLs vs code
+5. **Keep Workflows Simple**: Avoid over-engineering CI/CD for small projects
+
+##### Alternative Deployment Options
+
+**For Future Consideration**:
+- **Azure DevOps Pipelines**: Better integration with Azure services
+- **VS Code Azure Functions Extension**: GUI-based deployment
+- **ARM Templates + Azure CLI**: Infrastructure-as-Code approach
+- **Bicep Templates**: Modern Azure resource management
+
+#### Documentation Value
+
+This deployment experience demonstrates:
+- **Real-world Azure constraints**: Not all documentation scenarios work in practice
+- **Educational account limitations**: Understand your Azure subscription capabilities
+- **Backup strategy importance**: Always have a manual deployment option
+- **Debugging skills**: How to interpret Azure deployment errors
+
+**Recommendation**: For learning and prototyping, master Azure CLI deployment before attempting GitHub Actions automation.
+
 ## 🚀 Future Enhancement Ideas
 
 ### Model Improvements
