@@ -1,0 +1,56 @@
+# Alternative deployment method using Azure CLI
+# Uncomment and use this if publish profile method continues to fail
+
+# name: Azure Function App - CLI Deployment
+
+# on:
+#   push:
+#     branches:
+#       - master
+#   workflow_dispatch:
+
+# env:
+#   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'function_app'
+#   AZURE_FUNCTION_NAME: "penguin-classifier-consumption"
+#   PYTHON_VERSION: '3.10'
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read 
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Python version
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: ${{ env.PYTHON_VERSION }}
+
+#       - name: Create virtual environment and install dependencies
+#         working-directory: ${{env.AZURE_FUNCTIONAPP_PACKAGE_PATH}}
+#         run: |
+#           python -m venv venv
+#           source venv/bin/activate
+#           pip install -r requirements.txt
+
+#       - name: Azure Login
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+#       - name: Deploy to Azure Functions using CLI
+#         working-directory: ${{env.AZURE_FUNCTIONAPP_PACKAGE_PATH}}
+#         run: |
+#           az functionapp deployment source config-zip \
+#             --resource-group YOUR_RESOURCE_GROUP \
+#             --name ${{ env.AZURE_FUNCTION_NAME }} \
+#             --src ../function_app.zip
+
+# Instructions for Azure CLI method:
+# 1. Create service principal: az ad sp create-for-rbac --name "github-actions" --role contributor --scopes /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP --sdk-auth
+# 2. Add the JSON output as AZURE_CREDENTIALS secret in GitHub
+# 3. Update YOUR_RESOURCE_GROUP with your actual resource group name
+# 4. Rename this file to master_penguin-classifier-function.yml (replace the current one)
