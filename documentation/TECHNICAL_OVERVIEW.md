@@ -184,21 +184,22 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 
 **Note**: Function instances hibernate after ~5 minutes of inactivity (platform managed, not controlled by `functionTimeout` setting which only affects individual request execution time).
 
-## 🌐 CORS Explanation
+## 🌐 CORS Configuration and Troubleshooting
 
 **Cross-Origin Resource Sharing (CORS)** is a security mechanism that controls how web pages can access resources from different domains.
 
 ### Why CORS is Needed
 - **Static Web App URL**: `https://blue-wave-0b3a88b03.6.azurestaticapps.net`
-- **Function App URL**: `https://penguin-classifier-function.azurewebsites.net`
+- **Function App URL**: `https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net`
 - **Different domains**: Browsers block cross-origin requests by default
 
-### Implementation
+### CORS Implementation in Function Code
 ```python
 # In Azure Function - allow all origins
 headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With"
 }
 
 # Handle preflight OPTIONS requests
@@ -206,8 +207,147 @@ if req.method == "OPTIONS":
     return func.HttpResponse(status_code=204, headers=headers)
 ```
 
-### Alternative Approach
-Azure Static Web Apps automatically handles CORS for linked functions, eliminating the need for manual CORS configuration when properly integrated. Consider relying on this feature if your frontend and backend are both deployed within Azure Static Web Apps and are properly linked.
+### Common CORS Issue: "Failed to Fetch" Error
+
+#### Problem Encountered
+After deployment, the web application showed the error:
+- **Frontend Error**: "Prediction Failed - Unable to get prediction. Please try again. Error: Failed to fetch"
+- **Browser Console**: CORS policy blocks the request from Static Web App to Azure Function
+- **Root Cause**: Azure Function only allowed `https://portal.azure.com` in CORS settings, blocking requests from the Static Web App domain
+
+#### Troubleshooting Process
+
+**1. Verify Function is Working**
+```bash
+# Test direct API call (works - confirms function is operational)
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+  -H "Content-Type: application/json" \
+  -d '{"features": [48.8, 18.4, 196, 3733]}'
+
+# Response: {"prediction": 1, "class": "Chinstrap", "species_name": "Chinstrap", "features": [48.8, 18.4, 196, 3733], "success": true, "confidence": 0.67}
+```
+
+**2. Check Current CORS Configuration**
+```bash
+# View current allowed origins
+az functionapp cors show --name penguin-classifier-consumption --resource-group rg-cours
+
+# Output showed only portal.azure.com was allowed:
+# {
+#   "allowedOrigins": [
+#     "https://portal.azure.com"
+#   ],
+#   "supportCredentials": false
+# }
+```
+
+**3. Test CORS Preflight Behavior**
+```bash
+# Test OPTIONS request to verify CORS headers
+curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+  -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type" \
+  -v
+
+# Initially failed due to missing origin in allowed list
+```
+
+#### Solution: Add Static Web App to CORS Allowed Origins
+
+**Add Specific Domain**
+```bash
+# Add the Static Web App domain to allowed origins
+az functionapp cors add --name penguin-classifier-consumption --resource-group rg-cours --allowed-origins https://blue-wave-0b3a88b03.6.azurestaticapps.net
+```
+
+**Verify Configuration**
+```bash
+# Check that origins were added successfully
+az functionapp cors show --name penguin-classifier-consumption --resource-group rg-cours
+
+# Expected output:
+# {
+#   "allowedOrigins": [
+#     "https://portal.azure.com",
+#     "https://blue-wave-0b3a88b03.6.azurestaticapps.net"
+#   ],
+#   "supportCredentials": false
+# }
+```
+
+**Remove Wildcard (Security Best Practice)**
+```bash
+# Remove wildcard if previously added for development
+az functionapp cors remove --name penguin-classifier-consumption --resource-group rg-cours --allowed-origins "*"
+
+# This ensures only specific, trusted domains can access the function
+```
+
+#### Verification Commands
+
+**Test CORS Preflight After Fix**
+```bash
+# Verify OPTIONS request returns proper CORS headers
+curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+  -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: Content-Type" \
+  -v
+
+# Should return:
+# < HTTP/1.1 204 No Content
+# < Access-Control-Allow-Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net
+# < Access-Control-Allow-Methods: POST
+# < Access-Control-Allow-Headers: Content-Type
+```
+
+**Test Actual POST with Origin**
+```bash
+# Test POST request with Origin header (simulates browser behavior)
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+  -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
+  -H "Content-Type: application/json" \
+  -d '{"features": [48.8, 18.4, 196, 3733]}' \
+  -v
+
+# Should return successful prediction with CORS headers
+```
+
+#### Key Learning Points
+
+1. **Dual CORS Configuration**: Both Azure Function platform CORS settings AND function code CORS headers are needed
+2. **Platform vs Code**: Azure CLI configures platform-level CORS, while Python code handles response headers
+3. **Testing Strategy**: Always test both OPTIONS preflight and actual POST requests
+4. **Domain Specificity**: Be precise with domain names (https://, exact subdomain)
+5. **Immediate Effect**: CORS configuration changes take effect immediately (no restart needed)
+
+#### Alternative Approaches
+
+**Azure Static Web App Integration**: For future projects, consider using Azure Static Web App's built-in function integration, which automatically handles CORS when functions are deployed as part of the Static Web App configuration.
+
+**Function Proxy**: Azure Functions Proxy can also handle CORS centrally, but requires additional configuration complexity.
+
+### Production Considerations
+
+- **Security**: Never use `"*"` wildcard in production; always specify exact domains
+- **Principle of Least Privilege**: Only allow origins that actually need access
+- **Environment-Specific**: Different CORS settings for development vs production
+- **Regular Audit**: Periodically review and clean up CORS origins
+- **Monitoring**: Track CORS-related errors in Application Insights
+- **Documentation**: Always document required CORS origins for team members
+
+#### CORS Security Example
+```bash
+# ✅ GOOD: Specific domain only
+az functionapp cors add --allowed-origins https://myapp.azurestaticapps.net
+
+# ❌ BAD: Wildcard allows any domain (security risk)
+az functionapp cors add --allowed-origins "*"
+
+# 🛠️ CLEANUP: Remove wildcards from production
+az functionapp cors remove --allowed-origins "*"
+```
 
 ## 💻 Local Development
 
