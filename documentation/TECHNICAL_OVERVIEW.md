@@ -1,41 +1,6 @@
 # 🔬 Technical Deep Dive: Penguin Species Classifier
 
-## Executive Summary
 
-This document provides a comprehensive technical explanation of the Penguin Species Classifier web application, detailing the complete data flow from user input to machine learning prediction and result display.
-## � Azure Functions Programming Model
-
-### v2 Programming Model (Current Implementation)
-
-This project uses the **Azure Functions v2 Programming Model** which provides several advantages over the traditional v1 model:
-
-#### Key Features:
-- **Code-First Approach**: Function triggers and bindings are defined using Python decorators
-- **Blueprint Architecture**: Functions are organized into logical blueprints for better code organization
-- **Simplified Development**: No need to manage separate `function.json` configuration files
-- **Better Tooling**: Enhanced IntelliSense and type safety with Python type hints
-- **Centralized Registration**: All functions registered in a single `__init__.py` file
-
-#### Migration Benefits:
-- **Reduced Configuration**: Eliminated 20+ lines of JSON configuration per function
-- **Improved Maintainability**: Function definition and configuration in the same file
-- **Enhanced Developer Experience**: Better debugging and development workflow
-- **Future-Proof**: Microsoft's recommended approach for new Azure Functions projects
-
-#### Comparison:
-```python
-# v1 Model (deprecated approach)
-# Required function.json + separate Python file
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    # Function logic here
-    pass
-
-# v2 Model (current implementation)
-# Single Python file with decorator
-@bp.route(route="ClassifyPenguinSimple", methods=["POST"], auth_level=func.AuthLevel.ANONYMOUS)
-def classify(req: func.HttpRequest) -> func.HttpResponse:
-    # Function logic here
-    pass
 ```
 
 ## �🏗️ System Architecture Overview
@@ -84,7 +49,7 @@ fetch('/api/ClassifyPenguinSimple', {
 
 ### Backend Processing (v2 Programming Model)
 
-#### Application Setup (`function_app/__init__.py`)
+#### Application Setup (`function_app/function_app.py`)
 ```python
 import azure.functions as func
 
@@ -190,7 +155,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 
 ### Why CORS is Needed
 - **Static Web App URL**: `https://blue-wave-0b3a88b03.6.azurestaticapps.net`
-- **Function App URL**: `https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net`
+- **Function App URL**: `<Default-domain-name-here>`
 - **Different domains**: Browsers block cross-origin requests by default
 
 ### CORS Implementation in Function Code
@@ -244,7 +209,7 @@ az functionapp cors show --name penguin-classifier-consumption --resource-group 
 **3. Test CORS Preflight Behavior**
 ```bash
 # Test OPTIONS request to verify CORS headers
-curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+curl -X OPTIONS <Default-domain-name-here>/api/ClassifyPenguinSimple \
   -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: Content-Type" \
@@ -258,13 +223,13 @@ curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeur
 **Add Specific Domain**
 ```bash
 # Add the Static Web App domain to allowed origins
-az functionapp cors add --name penguin-classifier-consumption --resource-group rg-cours --allowed-origins https://blue-wave-0b3a88b03.6.azurestaticapps.net
+az functionapp cors add --name penguin-classifier-consumption --resource-group <resource-group-name-here> --allowed-origins https://blue-wave-0b3a88b03.6.azurestaticapps.net
 ```
 
 **Verify Configuration**
 ```bash
 # Check that origins were added successfully
-az functionapp cors show --name penguin-classifier-consumption --resource-group rg-cours
+az functionapp cors show --name penguin-classifier-consumption --resource-group <resource-group-name-here>
 
 # Expected output:
 # {
@@ -276,20 +241,12 @@ az functionapp cors show --name penguin-classifier-consumption --resource-group 
 # }
 ```
 
-**Remove Wildcard (Security Best Practice)**
-```bash
-# Remove wildcard if previously added for development
-az functionapp cors remove --name penguin-classifier-consumption --resource-group rg-cours --allowed-origins "*"
-
-# This ensures only specific, trusted domains can access the function
-```
-
 #### Verification Commands
 
 **Test CORS Preflight After Fix**
 ```bash
 # Verify OPTIONS request returns proper CORS headers
-curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+curl -X OPTIONS <Default-domain-name-here>/api/ClassifyPenguinSimple \
   -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: Content-Type" \
@@ -305,7 +262,7 @@ curl -X OPTIONS https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeur
 **Test Actual POST with Origin**
 ```bash
 # Test POST request with Origin header (simulates browser behavior)
-curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+curl -X POST <Default-domain-name-here>/api/ClassifyPenguinSimple \
   -H "Origin: https://blue-wave-0b3a88b03.6.azurestaticapps.net" \
   -H "Content-Type: application/json" \
   -d '{"features": [48.8, 18.4, 196, 3733]}' \
@@ -313,29 +270,6 @@ curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope
 
 # Should return successful prediction with CORS headers
 ```
-
-#### Key Learning Points
-
-1. **Dual CORS Configuration**: Both Azure Function platform CORS settings AND function code CORS headers are needed
-2. **Platform vs Code**: Azure CLI configures platform-level CORS, while Python code handles response headers
-3. **Testing Strategy**: Always test both OPTIONS preflight and actual POST requests
-4. **Domain Specificity**: Be precise with domain names (https://, exact subdomain)
-5. **Immediate Effect**: CORS configuration changes take effect immediately (no restart needed)
-
-#### Alternative Approaches
-
-**Azure Static Web App Integration**: For future projects, consider using Azure Static Web App's built-in function integration, which automatically handles CORS when functions are deployed as part of the Static Web App configuration.
-
-**Function Proxy**: Azure Functions Proxy can also handle CORS centrally, but requires additional configuration complexity.
-
-### Production Considerations
-
-- **Security**: Never use `"*"` wildcard in production; always specify exact domains
-- **Principle of Least Privilege**: Only allow origins that actually need access
-- **Environment-Specific**: Different CORS settings for development vs production
-- **Regular Audit**: Periodically review and clean up CORS origins
-- **Monitoring**: Track CORS-related errors in Application Insights
-- **Documentation**: Always document required CORS origins for team members
 
 #### CORS Security Example
 ```bash
@@ -345,8 +279,6 @@ az functionapp cors add --allowed-origins https://myapp.azurestaticapps.net
 # ❌ BAD: Wildcard allows any domain (security risk)
 az functionapp cors add --allowed-origins "*"
 
-# 🛠️ CLEANUP: Remove wildcards from production
-az functionapp cors remove --allowed-origins "*"
 ```
 
 ## 💻 Local Development
@@ -359,20 +291,6 @@ source ../web_app_env/bin/activate
 # Start the functions host
 func host start  # Starts on http://localhost:7071
 ```
-
-### Project Structure for v2 Model
-```
-function_app/
-├── __init__.py              # Main app with blueprint registration
-├── function_app.py          # Entry point for v2 programming model
-├── host.json               # Host configuration with v2 extension bundle
-├── requirements.txt        # Python dependencies
-└── ClassifyPenguinSimple/
-    ├── __init__.py         # Blueprint with @bp.route decorator
-    └── penguins_model.pkl  # ML model file
-```
-
-**Note**: The v2 programming model no longer requires `function.json` files. Function configuration is handled through Python decorators and blueprints.
 
 ### Serving Static Files Locally
 ```bash
@@ -527,20 +445,6 @@ curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPengu
 }
 ```
 
-### Azure Functions v2 Programming Model
-
-The application uses the **Azure Functions v2 Programming Model** which eliminates the need for `function.json` configuration files. Instead, functions are defined using:
-
-1. **Decorators**: `@bp.route()` decorators define HTTP triggers and routes
-2. **Blueprints**: Functions are organized into blueprints and registered with the main app
-3. **Centralized Configuration**: The main app configuration is handled in `__init__.py`
-
-#### Key Advantages of v2 Model:
-- **Simplified Structure**: No need for separate `function.json` files
-- **Code-First Approach**: Function configuration is defined in Python code
-- **Better IntelliSense**: Improved development experience with type hints
-- **Centralized Management**: All functions registered in a single location
-
 ## 🚀 Deployment Strategies and Lessons Learned
 
 ### GitHub Actions Deployment Challenges
@@ -637,68 +541,24 @@ Functions in penguin-classifier-consumption:
 | **Debugging** | Limited error visibility | Full deployment logs |
 | **Setup Complexity** | High (secrets, workflows) | Minimal |
 | **Educational Accounts** | Often fails due to restrictions | Usually works |
-| **Deployment Speed** | ~5-8 minutes (if working) | ~3-4 minutes |
 
-#### Lessons Learned for Future Projects
-
-##### When to Use Each Method
-
-**Use GitHub Actions When**:
-- You have full administrative access to Azure AD
-- Working in enterprise environments with proper service principals
-- Need automated CI/CD pipelines
-- Multiple developers deploying regularly
-
-**Use Azure CLI Direct When**:
-- Working with educational Azure accounts
-- Personal projects with single developer
-- Need quick deployment without CI/CD setup
-- Troubleshooting deployment issues
-
-##### Best Practices for Azure Function Deployment
-
-1. **Start with Azure CLI**: Always test local deployment first
-2. **Validate Permissions**: Check `az functionapp list` before attempting automated deployment
-3. **Monitor Build Logs**: Watch for dependency conflicts during remote build
-4. **Test Both URLs**: Azure Functions may show different case in URLs vs code
-5. **Keep Workflows Simple**: Avoid over-engineering CI/CD for small projects
 
 ##### Alternative Deployment Options
 
 **For Future Consideration**:
 - **Azure DevOps Pipelines**: Better integration with Azure services
 - **VS Code Azure Functions Extension**: GUI-based deployment
-- **ARM Templates + Azure CLI**: Infrastructure-as-Code approach
-- **Bicep Templates**: Modern Azure resource management
 
-#### Documentation Value
-
-This deployment experience demonstrates:
-- **Real-world Azure constraints**: Not all documentation scenarios work in practice
-- **Educational account limitations**: Understand your Azure subscription capabilities
-- **Backup strategy importance**: Always have a manual deployment option
-- **Debugging skills**: How to interpret Azure deployment errors
-
-**Recommendation**: For learning and prototyping, master Azure CLI deployment before attempting GitHub Actions automation.
 
 ## 🚀 Future Enhancement Ideas
 
 ### Model Improvements
-- **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data. The new penguin data can be inputs from users: examples they search for. The training can be done on Azure.
+- **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data on Azure ML. The new penguin data can be inputs from users: examples they search for. To ensure the data is coherent, only the data that provide a 90+ confidence score should be added.
 - **Explainable AI Features**: Interactive model card, training process visualization, performance metrics dashboard
 
 ### Production Features
 - **API Authentication**: JWT tokens, rate limiting, user management
-- **Advanced Analytics**: Usage tracking, prediction patterns, A/B testing
 
-### Deployment Notes
-
-**Quick Deploy Options:**
-1. **GitHub Integration**: Connect Azure Static Web App to repository for auto-deploy
-2. **Azure CLI**: Deploy manually using `az staticwebapp create`
-
-**Architecture Choice:** 
-Serverless (Azure Functions + Static Web Apps) - <1s 
 
 ## 🎯 Implementation Pattern Summary
 
@@ -720,7 +580,7 @@ This penguin species classifier demonstrates a complete modern web application a
 - **Maintainability**: Clean code structure with comprehensive documentation
 
 **Performance Metrics:**
-- **Response Time**: <~12 seconds for cold start, less than 1 second for warm start 
+- **Response Time**: <~15 seconds for cold start, less than 1 second for warm start 
 - **Prediction Accuracy**: >97% on test dataset
 - **Deployment Cost**: Currently within the free consumption plan. Can scale to $5 monthly.
 - **Scalability**: Supports thousands of concurrent users

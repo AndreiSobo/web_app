@@ -36,7 +36,6 @@ This project demonstrates end-to-end machine learning deployment using Azure clo
 ### **Input & Output**
 - **Input**: Culmen length, culmen depth, flipper length, body mass (in mm/grams)
 - **Output**: Species classification with confidence score and explainable AI insights
-- **Performance**: <1 second response time, ~$0.001 per prediction
 
 ## 🏗️ **How It Works - Technical Implementation**
 
@@ -67,7 +66,7 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 
 3. **Machine Learning**: Random Forest Classifier
    - Pre-trained on Palmer Penguins dataset (>97% accuracy)
-   - Cached in memory for fast inference (<100ms)
+   - Cached in memory for fast inference
    - Handles 4 normalized features: culmen dimensions, flipper length, body mass
 
 ### **Technical Flow Details**
@@ -80,40 +79,12 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 
 ### **Live Application**
 - **Web Interface**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/
-- **API Endpoint**: https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple
+- **API Endpoint**: <Default-domain-of-azure-function>/api/ClassifyPenguinSimple
 
 ### **Azure Resources**
 - **Static Web App**: Hosts frontend and routes API calls
 - **Function App**: Processes ML predictions
 - **Application Insights**: Monitors performance and errors
-
-## 📁 **Project Structure**
-
-```
-web_app/
-├── static/                    # Frontend web application
-│   ├── index.html            # Main web interface
-│   ├── app.js               # Frontend logic and API calls
-│   └── styles.css           # Styling and responsive design
-├── function_app/             # Azure Functions backend (v2 programming model)
-│   ├── __init__.py          # Main app with blueprint registration
-│   ├── function_app.py      # Entry point for v2 model
-│   ├── host.json           # Host configuration with v2 extension bundle
-│   ├── requirements.txt    # Python dependencies
-│   └── ClassifyPenguinSimple/
-│       ├── __init__.py     # Function blueprint with decorators
-│       └── penguins_model.pkl  # Pre-trained ML model
-├── models/                   # ML model files
-├── notebooks/               # Data science workflows
-├── data/                    # Training data
-└── documentation/           # Technical documentation
-```
-
-**Key v2 Programming Model Features:**
-- No `function.json` files required
-- Function configuration via Python decorators
-- Blueprint-based organization
-- Centralized app registration
 
 ## 🧪 **Testing**
 
@@ -126,7 +97,7 @@ web_app/
 
 #### **API Testing**
 ```bash
-curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+curl -X POST <Default-domain-of-azure-function>/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7, 181, 3750]}'
 ```
@@ -140,7 +111,7 @@ For local testing, the Azure Functions runtime needs to run in the background. U
 cd /home/andrei/git/web_app/function_app && nohup func host start > /tmp/func.log 2>&1 & sleep 3 && echo "Function started, testing now..."
 ```
 
-**Why this command works:**
+**How this command works:**
 - `nohup` - Prevents process termination when terminal closes
 - `func host start` - Starts the Azure Functions runtime
 - `> /tmp/func.log 2>&1` - Redirects output to log file for debugging
@@ -163,7 +134,7 @@ tail -f /tmp/func.log
 ```
 
 #### **Stopping Local Function**
-To stop the background function:
+To stop the background function or any process that uses this port:
 ```bash
 lsof -ti:7071 | xargs kill -9
 ```
@@ -184,25 +155,14 @@ Expected output:
 - **Response Time**: <1 second
 - **Availability**: 99.9% (Azure SLA)
 - **Throughput**: Scales automatically with demand
-- **Cold Start**: <5 seconds for first request
+- **Cold Start**: ~10 seconds for first request
 
 ### **Cost Analysis**
 - **Function Execution**: ~$0.001 per prediction
 - **Static Web App**: Free tier sufficient
 - **Data Transfer**: Negligible for API responses
-- **Monthly Estimate**: <$10 for moderate usage
+- **Monthly Estimate**: <$5 for moderate usage
 
-## 🚀 **Future Enhancements**
-
-### **Short Term**
-- **Model Retraining**: Update with new penguin data
-- **Additional Features**: Add penguin sex prediction
-- **UI Improvements**: Better visualization of results
-
-### **Long Term**
-- **Image Classification**: Migrate to computer vision for penguin photos
-- **Container Deployment**: For larger models requiring GPU support
-- **Multi-Model Pipeline**: Combine multiple ML models for enhanced accuracy
 
 ## 🛠️ **Development & Deployment**
 
@@ -211,6 +171,10 @@ Expected output:
 # Clone and setup
 git clone https://github.com/AndreiSobo/web_app.git
 cd web_app
+
+# create and activate virtual env
+python3 -m venv new_venv_name
+source new_venv_name/bin/activate
 
 # Local development with v2 programming model
 cd function_app
@@ -221,20 +185,17 @@ func host start                      # Start Azure Functions locally (v2 model)
 cd static && python -m http.server   # Serve static files
 ```
 
-**Note**: This project uses Azure Functions **v2 Programming Model** which uses decorators and blueprints instead of `function.json` configuration files.
-
 ### **Deployment**
-- **Automatic**: Push to GitHub triggers auto-deployment via GitHub Actions
-- **Manual**: Deploy via Azure CLI or VS Code Azure extensions
+- **Manual**: Deploy via Azure CLI or VS Code Azure extensions. This project was deployed using the CLI
 
 For detailed technical implementation, see **[Technical Documentation](documentation/TECHNICAL_OVERVIEW.md)**
 
 ## 📚 **Documentation**
 
 ### **Additional Documentation**
-- **[Technical Overview](documentation/TECHNICAL_OVERVIEW.md)** - Complete system architecture, API reference, and implementation details for academic/professional presentations
+- **[Technical Overview](documentation/TECHNICAL_OVERVIEW.md)** - Complete system architecture, API reference, and implementation details
 
-## 🎯 **Why This Project Matters - Showcase Objectives**
+## 🎯 **Why This Project Matters**
 
 ### **Cloud Infrastructure Demonstration**
 This project showcases modern cloud-native architecture patterns:
@@ -247,7 +208,7 @@ This project showcases modern cloud-native architecture patterns:
 Demonstrates production ML deployment techniques:
 - **Model Serving**: Efficient in-memory caching of pre-trained models
 - **API Design**: RESTful endpoints with proper error handling and validation
-- **Performance Optimization**: <1 second response times with cold start management
+- **Performance Optimization**: <1 second response times after cold start
 - **Explainable AI**: Feature importance and confidence scoring for transparency
 
 ### **Azure Platform Integration**
@@ -261,10 +222,9 @@ Exhibits comprehensive Azure ecosystem usage:
 Showcases complete cloud solution development:
 - **Full-Stack Development**: Frontend, backend, and ML model integration
 - **Production Readiness**: Error handling, CORS configuration, and scalability
-- **Cost Optimization**: Choosing appropriate Azure services for workload requirements
-- **Developer Experience**: Local development workflow with cloud deployment automation
+- **Cost Optimization**: Choosing appropriate Azure services to keep costs low
 
-This project serves as a practical example of how to leverage Azure's cloud infrastructure to deploy machine learning models in a production-ready, cost-effective, and scalable manner.
+This project demonstrates how to leverage Azure's cloud infrastructure to deploy machine learning models in a production-ready, cost-effective, and scalable manner. Using the webpage for user input bridges the gap between individuals not familiar with machine learning and the benefits of using these models. 
 
 ## 🚀 **Deployment**
 
@@ -279,7 +239,7 @@ Due to authentication challenges with GitHub Actions in educational Azure accoun
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # 2. Login to Azure
-az login
+az login  # leads to a browser for Microsoft Authentication
 
 # 3. Navigate to function directory and deploy
 cd function_app
