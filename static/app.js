@@ -60,8 +60,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Sending request payload:', payload);
 
-        // Define endpoint to use - pointing to deployed Azure Function
-        const endpoint = 'https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple';
+        // API Configuration - Use relative URLs for better deployment flexibility
+        const API_CONFIG = {
+            classify: '/api/ClassifyPenguinSimple',  // Routes through Static Web Apps
+            xai: '/api/XAI'  // Direct XAI endpoint for potential future use
+        };
 
         // In production, this would be the actual API call
         const useMockData = false; // Set to false when actual API is available
@@ -82,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 1500);
         } else {
             // Make the actual API call
-            fetch(endpoint, {
+            fetch(API_CONFIG.classify, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -90,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(payload)
             })
                 .then(response => {
-                    console.log(`${endpoint} response status:`, response.status);
+                    console.log(`${API_CONFIG.classify} response status:`, response.status);
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -100,10 +103,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(handleResponse)
                 .catch(error => {
                     console.error('Prediction failed:', error);
+                    let errorMessage = 'Unable to get prediction. Please try again.';
+
+                    // More specific error messages
+                    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                        errorMessage = 'Network error. Please check your connection and try again.';
+                    } else if (error.message.includes('XAI')) {
+                        errorMessage = 'Prediction successful, but explainable AI analysis is currently unavailable.';
+                    }
+
                     outputValue.innerHTML = `
                     <div class="alert alert-danger mb-0">
                         <div class="h5">Prediction Failed</div>
-                        <p>Unable to get prediction. Please try again.</p>
+                        <p>${errorMessage}</p>
                         <small class="text-muted">Error: ${error.message}</small>
                     </div>
                 `;
@@ -130,46 +142,74 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Update output value with formatted result
+        // Extract response data
         const speciesName = data.species_name || data.prediction || data.class || "Unknown";
-        const confidence = data.confidence || 0.52; // Default placeholder value
+        const confidence = data.confidence || 0.52;
         const confidenceHtml = `<div class="mt-2">Confidence: ${(confidence * 100).toFixed(2)}%</div>`;
 
-        // Handle top features for XAI (with fallback to placeholder data)
-        const topFeatures = data.top_features || [
-            { "name": "culmen-depth", "impact": 0.1362 },
-            { "name": "flipper-length", "impact": -0.1279 }
-        ];
+        // Check for XAI data availability with proper validation
+        const hasXAIData = data.top_features &&
+            Array.isArray(data.top_features) &&
+            data.top_features.length >= 2 &&
+            data.top_features.every(f => f.name && typeof f.impact === 'number');
 
-        const forcePlotUrl = data.force_plot_url || "https://via.placeholder.com/600x200/f8f9fa/6c757d?text=SHAP+Force+Plot+Placeholder";
+        let xaiContent = '';
+
+        if (hasXAIData) {
+            // Use real XAI data from backend
+            const topFeatures = data.top_features;
+            const xaiExplanation = `
+                The model analyzed your penguin's features using SHAP (SHapley Additive exPlanations) values. 
+                The 2 most influential features for this <strong>${speciesName}</strong> prediction are: 
+                <strong>${topFeatures[0].name}</strong> (impact: <strong>${topFeatures[0].impact > 0 ? '+' : ''}${topFeatures[0].impact.toFixed(4)}</strong>) 
+                and <strong>${topFeatures[1].name}</strong> (impact: <strong>${topFeatures[1].impact > 0 ? '+' : ''}${topFeatures[1].impact.toFixed(4)}</strong>). 
+                Positive values increase the likelihood of this species, while negative values decrease it.
+            `;
+
+            xaiContent = `
+                <!-- Explainable AI Card with Real Data -->
+                <div class="xai-card mt-3" id="xai-card">
+                    <div class="xai-card-header" id="xai-card-header" tabindex="0" role="button" aria-expanded="false">
+                        <span class="xai-card-title">🧠 Explainable AI Analysis</span>
+                        <span class="xai-card-arrow" id="xai-arrow">▼</span>
+                    </div>
+                    <div class="xai-card-body" id="xai-body" style="display: none;">
+                        <p class="xai-explanation">
+                            ${xaiExplanation}
+                            Final confidence score: <strong>${(confidence * 100).toFixed(2)}%</strong>.
+                        </p>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Simple failure message when XAI is unavailable
+            xaiContent = `
+                <div class="alert alert-warning mt-3">
+                    <strong>⚠️ XAI Analysis Failed</strong><br>
+                    Explainable AI analysis is currently unavailable.
+                </div>
+            `;
+        }
 
         outputValue.innerHTML = `
             <div class="alert alert-success mb-0">
                 <div class="h3">Predicted Species: ${speciesName}</div>
                 ${confidenceHtml}
             </div>
-            
-            <!-- Explainable AI Card -->
-            <div class="xai-card mt-3" id="xai-card">
-                <div class="xai-card-header" id="xai-card-header" tabindex="0" role="button" aria-expanded="false">
-                    <span class="xai-card-title">🧠 Want to know more? Try Explainable AI</span>
-                    <span class="xai-card-arrow" id="xai-arrow">▼</span>
-                </div>
-                <div class="xai-card-body" id="xai-body" style="display: none;">
-                    <p class="xai-explanation">
-                        The model was trained to distinguish between 3 penguin species based on physical characteristics. 
-                        The features of the model influence its decision, and the 2 most influential features are: 
-                        <strong>${topFeatures[0].name}</strong> with a <strong>${topFeatures[0].impact.toFixed(4)}</strong> contribution 
-                        and <strong>${topFeatures[1].name}</strong> with a <strong>${topFeatures[1].impact.toFixed(4)}</strong> contribution. 
-                        These, together with the other 2 features, contributed to the confidence score of <strong>${(confidence * 100).toFixed(2)}%</strong>.
-                    </p>
-                    <div class="xai-plot-container">
-                        <h6>SHAP Force Plot</h6>
-                        <img src="${forcePlotUrl}" alt="SHAP Force Plot" class="xai-plot-image">
-                    </div>
-                </div>
-            </div>
+            ${xaiContent}
         `;
+
+        // Add event listeners for XAI card interaction
+        const xaiHeader = document.getElementById('xai-card-header');
+        if (xaiHeader) {
+            xaiHeader.addEventListener('click', toggleXAICard);
+            xaiHeader.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleXAICard();
+                }
+            });
+        }
 
         resetFormState();
     }

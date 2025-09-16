@@ -10,3 +10,10 @@ try:
 except Exception as e:
     import logging
     logging.exception("Failed to register ClassifyPenguinSimple blueprint: %s", e)
+
+try:
+    from XAI import bp as xai_bp
+    app.register_functions(xai_bp)
+except Exception as e:
+    import logging
+    logging.exception("Failed to register XAI blueprint: %s", e)

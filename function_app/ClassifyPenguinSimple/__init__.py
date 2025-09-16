@@ -6,6 +6,7 @@ from typing import Optional
 import azure.functions as func
 import joblib
 import numpy as np
+import requests
 
 bp = func.Blueprint()
 
@@ -28,6 +29,10 @@ def load_model():
             logging.exception("Error loading model: %s", e)
             raise
     return _model
+
+def get_xai_endpoint():
+    function_app_url = os.getenv('WEBSITE_HOSTNAME', 'penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net')
+    return f'https://{function_app_url}/api/XAI'
 
 @bp.route(route="ClassifyPenguinSimple", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def classify(req: func.HttpRequest) -> func.HttpResponse:
@@ -84,7 +89,40 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
         # Species mapping
         penguin_species = ['Adelie', 'Chinstrap', 'Gentoo']
         species_name = penguin_species[prediction]
+
+        # xai payload
+        top_features = []
+
+        xai_payload = {
+            "new_features": features,
+            'predicted_class': prediction
+        }
         
+        try:
+            xai_url = get_xai_endpoint()
+            
+            # make http request to xai function
+            xai_response = requests.post(
+                xai_url,
+                json=xai_payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+
+            if xai_response.status_code == 200:
+                xai_data = xai_response.json()
+                feature_importance = xai_data.get('feature_importance', {})
+
+                top_features = [
+                    {'name': name, 'impact': impact}
+                    for name, impact in feature_importance.items()
+                ]
+                logging.info(f"successfully got xai data: {top_features}")
+            else:
+                logging.warning(f"XAI function returned status: {xai_response.status_code}")
+        except Exception as e:
+            logging.warning(f"an error occured while implementing XAI.: {str(e)}")
+
         # Response
         response = {
             "prediction": prediction,
@@ -96,6 +134,9 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
         
         if confidence is not None:
             response["confidence"] = confidence
+
+        if top_features is not None:
+            response['top_features'] = top_features
 
         return func.HttpResponse(
             json.dumps(response),

@@ -1,6 +1,28 @@
 {
     "routes": [
         {
+            "route": "/api/ClassifyPenguinSimple",
+            "methods": [
+                "GET",
+                "POST",
+                "OPTIONS"
+            ],
+            "allowedRoles": [
+                "anonymous"
+            ]
+        },
+        {
+            "route": "/api/XAI",
+            "methods": [
+                "GET",
+                "POST",
+                "OPTIONS"
+            ],
+            "allowedRoles": [
+                "anonymous"
+            ]
+        },
+        {
             "route": "/api/*",
             "methods": [
                 "GET",
