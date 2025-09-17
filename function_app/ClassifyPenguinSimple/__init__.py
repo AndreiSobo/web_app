@@ -30,6 +30,7 @@ def load_model():
             raise
     return _model
 
+# TODO improve this function to use secrets for function app url
 def get_xai_endpoint():
     function_app_url = os.getenv('WEBSITE_HOSTNAME', 'penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net')
     return f'https://{function_app_url}/api/XAI'
@@ -113,6 +114,9 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
                 xai_data = xai_response.json()
                 feature_importance = xai_data.get('feature_importance', {})
 
+                # add the force plot string
+                force_plot_string = xai_data.get('force_plot_string', None)
+
                 top_features = [
                     {'name': name, 'impact': impact}
                     for name, impact in feature_importance.items()
@@ -137,6 +141,9 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 
         if top_features is not None:
             response['top_features'] = top_features
+            
+        if force_plot_string is not None:
+            response['force_plot_string'] = force_plot_string
 
         return func.HttpResponse(
             json.dumps(response),

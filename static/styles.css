@@ -513,23 +513,211 @@ h1 {
 .xai-plot-container {
     border-top: 1px solid #f0f0f0;
     padding-top: 1rem;
+    margin-top: 1rem;
 }
 
 .xai-plot-container h6 {
     margin-bottom: 0.75rem;
     color: var(--primary-color);
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-/* SHAP Plot Image */
+/* SHAP Plot Content */
+.xai-plot-content {
+    position: relative;
+}
+
+/* SHAP Plot Image - Clickable */
 .xai-plot-image {
     width: 100%;
     max-width: 100%;
     height: auto;
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
+    border: 2px solid #e0e0e0;
     background-color: #f8f9fa;
     display: block;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 0.5rem;
+}
+
+.xai-plot-image:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+    transform: scale(1.02);
+}
+
+.xai-plot-image:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-color: var(--primary-color);
+}
+
+/* Plot Caption */
+.xai-plot-caption {
+    font-size: 0.85rem;
+    color: var(--dark-gray);
+    margin: 0.5rem 0 0 0;
+    text-align: center;
+}
+
+/* Loading State */
+.xai-plot-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px dashed #ccc;
+}
+
+.xai-plot-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.75rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.xai-plot-loading p {
+    margin: 0;
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+}
+
+/* Error State */
+.xai-plot-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    background-color: #fff3cd;
+    border-radius: 6px;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.xai-plot-error-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.xai-plot-error p {
+    margin: 0.25rem 0;
+    color: #856404;
+}
+
+.xai-plot-error .text-muted {
+    color: #6c6c6c !important;
+    font-size: 0.85rem;
+}
+
+/* Full Screen Modal */
+.xai-plot-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.xai-plot-modal-content {
+    background: white;
+    border-radius: var(--border-radius);
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow: auto;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.xai-plot-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.xai-plot-modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.xai-plot-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--dark-gray);
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.xai-plot-modal-close:hover,
+.xai-plot-modal-close:focus {
+    background-color: #e9ecef;
+    color: var(--primary-color);
+    outline: none;
+}
+
+.xai-plot-modal-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.xai-plot-modal-image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.xai-plot-modal-caption {
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 /* Mobile optimizations for XAI card */
@@ -548,6 +736,40 @@ h1 {
 
     .xai-explanation {
         font-size: 0.9rem;
+    }
+
+    /* Mobile modal optimizations */
+    .xai-plot-modal {
+        padding: 0.5rem;
+    }
+
+    .xai-plot-modal-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .xai-plot-modal-header h3 {
+        font-size: 1rem;
+    }
+
+    .xai-plot-modal-body {
+        padding: 1rem;
+    }
+
+    .xai-plot-modal-close {
+        width: 36px;
+        height: 36px;
+        font-size: 1.75rem;
+    }
+
+    /* Touch target optimization for force plot */
+    .xai-plot-image {
+        min-height: 44px;
+        /* Ensure touch target minimum */
+    }
+
+    /* Reduce transform scale on mobile for better UX */
+    .xai-plot-image:hover {
+        transform: scale(1.01);
     }
 }
 
@@ -810,5 +1032,71 @@ h1 {
 
     .xai-card-body ul {
         color: #d0d0d0;
+    }
+
+    /* Dark mode force plot styles */
+    .xai-plot-image {
+        border-color: #555;
+        background-color: #3c3c3c;
+    }
+
+    .xai-plot-image:hover {
+        border-color: var(--primary-color);
+    }
+
+    .xai-plot-caption {
+        color: #b0b0b0;
+    }
+
+    .xai-plot-loading {
+        background-color: #3c3c3c;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+
+    .xai-plot-loading p {
+        color: #b0b0b0;
+    }
+
+    .xai-plot-error {
+        background-color: #4a3c2a;
+        border-color: #8b6914;
+        color: #ffc107;
+    }
+
+    .xai-plot-error p {
+        color: #ffc107;
+    }
+
+    .xai-plot-error .text-muted {
+        color: #c0c0c0 !important;
+    }
+
+    /* Dark mode modal styles */
+    .xai-plot-modal-content {
+        background: #2c2c2c;
+    }
+
+    .xai-plot-modal-header {
+        background-color: #3c3c3c;
+        border-color: #555;
+    }
+
+    .xai-plot-modal-header h3 {
+        color: var(--primary-color);
+    }
+
+    .xai-plot-modal-close {
+        color: #e0e0e0;
+    }
+
+    .xai-plot-modal-close:hover,
+    .xai-plot-modal-close:focus {
+        background-color: #4a4a4a;
+        color: var(--primary-color);
+    }
+
+    .xai-plot-modal-caption {
+        color: #b0b0b0;
     }
 }
