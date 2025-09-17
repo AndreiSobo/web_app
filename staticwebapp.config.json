@@ -1,39 +1,6 @@
 {
     "routes": [
         {
-            "route": "/api/ClassifyPenguinSimple",
-            "methods": [
-                "GET",
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/api/XAI",
-            "methods": [
-                "GET",
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
-            "route": "/api/*",
-            "methods": [
-                "GET",
-                "POST",
-                "OPTIONS"
-            ],
-            "allowedRoles": [
-                "anonymous"
-            ]
-        },
-        {
             "route": "/static/*",
             "headers": {
                 "cache-control": "public, max-age=86400"
