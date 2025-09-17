@@ -6,20 +6,22 @@ A machine learning web application that classifies penguin species based on phys
 
 **Live Demo**: [https://blue-wave-0b3a88b03.6.azurestaticapps.net/](https://blue-wave-0b3a88b03.6.azurestaticapps.net/)
 
-### **✨ New Feature: Species Reference Values**
-The web interface now includes average measurements for each penguin species:
+### **✨ New Features**
+- **Species Reference Values**: Click-to-fill average measurements for each penguin species
+- **Explainable AI Analysis**: SHAP-based feature importance explanations for predictions
+- **Plan A+ Architecture**: Decoupled frontend and backend services for enhanced scalability
+
+**Species Reference Data:**
 - **Adelie**: Culmen 38.8×18.3mm, Flipper 190mm, Mass 3701g
 - **Chinstrap**: Culmen 47.5×15.0mm, Flipper 217mm, Mass 5076g  
 - **Gentoo**: Culmen 48.8×18.4mm, Flipper 196mm, Mass 3733g
 
-Click "Use Values" buttons to quickly test with realistic species data!
-
 ### **Test the API Directly**
 ```bash
-# Test with Chinstrap penguin averages
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
+# Test with Chinstrap penguin averages (Plan A+ direct function endpoint)
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
-  -d '{"features": [47.5, 15.0, 21.7, 50.76]}'
+  -d '{"features": [47.5, 15.0, 217, 5076]}'
 ```
 
 ## 🎯 **What This Project Does**
@@ -29,45 +31,47 @@ This project demonstrates end-to-end machine learning deployment using Azure clo
 
 ### **Key Features**
 - **Real-time ML Predictions**: Instant species classification from penguin measurements
-- **Cloud-Native Architecture**: Fully serverless deployment on Azure platform
-- **Interactive Web Interface**: User-friendly form with immediate results display
-- **Enterprise-Grade API**: RESTful endpoint for programmatic access
+- **Explainable AI**: SHAP-based feature importance analysis showing prediction reasoning
+- **Plan A+ Architecture**: Decoupled Static Web App frontend + dedicated Functions App backend
+- **Interactive Web Interface**: User-friendly form with immediate results and XAI insights
+- **Enterprise-Grade API**: RESTful endpoints with full ML and XAI capabilities
 
 ### **Input & Output**
 - **Input**: Culmen length, culmen depth, flipper length, body mass (in mm/grams)
-- **Output**: Species classification with confidence score and explainable AI insights
+- **Output**: Species classification with confidence score, feature importance analysis, and SHAP explanations
 
 ## 🏗️ **How It Works - Technical Implementation**
 
-### **System Architecture & Data Flow**
+### **System Architecture & Data Flow (Plan A+)**
 ```
-User Input → Frontend Validation → HTTP Request → Azure Function → Pre-trained ML Model → JSON Response → Web Display
+User Input → Frontend (Static Web App) → Direct API Call → Azure Functions App → ML Model + XAI Analysis → JSON Response → Web Display
 ```
 
 ### **Step-by-Step Process**
 1. **User Interaction**: User enters penguin measurements via web interface
-2. **Data Processing**: JavaScript validates and normalizes input data 
-3. **HTTP Trigger**: POST request sent to Azure Function endpoint (`/api/ClassifyPenguinSimple`)
-4. **Model Inference**: Pre-trained Random Forest classifier processes the features
-5. **Response Generation**: Function returns JSON with species prediction and confidence
-6. **Result Display**: Web interface updates with classification results and explanations
+2. **Data Processing**: JavaScript validates input data 
+3. **Direct API Call**: POST request sent to dedicated Azure Functions App endpoint
+4. **ML Inference**: Pre-trained Random Forest classifier processes the features
+5. **XAI Analysis**: Internal call to SHAP-based XAI function for feature importance
+6. **Response Generation**: Combined JSON with species prediction, confidence, and SHAP explanations
+7. **Result Display**: Web interface updates with classification results and explainable AI analysis
 
-### **Core Components**
+### **Core Components (Plan A+ Architecture)**
 1. **Frontend**: Azure Static Web App (HTML/CSS/JavaScript)
-   - Responsive web interface for data input
-   - Real-time form validation and user feedback
-   - Interactive results display with explainable AI features
+   - Responsive web interface with dark/light mode support
+   - Real-time form validation and species reference data
+   - Interactive results display with collapsible XAI explanations
 
-2. **Backend**: Azure Functions (Python 3.10) - **v2 Programming Model**
-   - HTTP-triggered serverless function using blueprints and decorators
-   - Cached pre-trained scikit-learn Random Forest model
-   - JSON API with CORS support for cross-origin requests
-   - Code-first approach eliminating `function.json` configuration files
+2. **Backend**: Dedicated Azure Functions App (Python 3.10) 
+   - **ClassifyPenguinSimple**: Main prediction endpoint with integrated XAI calls
+   - **XAI Function**: SHAP-based explainable AI analysis endpoint
+   - Full ML library support (1.5GB limit vs 100MB Static Web App limit)
+   - CORS-enabled for cross-origin requests from Static Web App
 
-3. **Machine Learning**: Random Forest Classifier
-   - Pre-trained on Palmer Penguins dataset (>97% accuracy)
-   - Cached in memory for fast inference
-   - Handles 4 normalized features: culmen dimensions, flipper length, body mass
+3. **Machine Learning & AI**: 
+   - **Random Forest Classifier**: Pre-trained model (>97% accuracy) with memory caching
+   - **SHAP Explainable AI**: TreeExplainer providing feature importance analysis
+   - **Background Object**: Pre-computed reference data for SHAP calculations
 
 ### **Technical Flow Details**
 - **Model Loading**: Random Forest classifier loaded once and cached globally
@@ -78,12 +82,14 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 ## 🚀 **Live Deployment & Access**
 
 ### **Live Application**
-- **Web Interface**: https://blue-wave-0b3a88b03.6.azurestaticapps.net/
-- **API Endpoint**: <Default-domain-of-azure-function>/api/ClassifyPenguinSimple
+- **Web Interface**: https://blue-wave-0b3a88b03.4.azurestaticapps.net/
+- **API Endpoints**: 
+  - **Main Classification**: https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple
+  - **XAI Analysis**: https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/XAI
 
-### **Azure Resources**
-- **Static Web App**: Hosts frontend and routes API calls
-- **Function App**: Processes ML predictions
+### **Azure Resources (Plan A+)**
+- **Static Web App**: Hosts frontend only (static files)
+- **Dedicated Functions App**: Processes ML predictions and XAI analysis
 - **Application Insights**: Monitors performance and errors
 
 ## 🧪 **Testing**
@@ -97,9 +103,13 @@ User Input → Frontend Validation → HTTP Request → Azure Function → Pre-t
 
 #### **API Testing**
 ```bash
-curl -X POST <Default-domain-of-azure-function>/api/ClassifyPenguinSimple \
+# Test main classification with XAI integration
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7, 181, 3750]}'
+
+# Expected response includes XAI analysis:
+# {"prediction": 0, "species_name": "Adelie", "confidence": 0.52, "top_features": [{"name": "culmen-length", "impact": 0.2654}, {"name": "flipper-length", "impact": -0.1852}]}
 ```
 
 ### **Local Development Testing**
@@ -146,7 +156,7 @@ lsof -ti:7071 | xargs kill -9
 
 Expected output:
 ```json
-{"prediction": 0, "species_name": "Adelie", "confidence": 0.98, "success": true}
+{"prediction": 0, "species_name": "Adelie", "confidence": 0.52, "success": true, "top_features": [{"name": "culmen-length", "impact": 0.2654}, {"name": "flipper-length", "impact": -0.1852}]}
 ```
 
 ## 📈 **Performance & Costs**

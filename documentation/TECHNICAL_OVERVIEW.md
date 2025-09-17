@@ -5,45 +5,73 @@
 
 ## �🏗️ System Architecture Overview
 
-### High-Level Data Flow
+### High-Level Data Flow (Plan A+ Architecture)
 
 ```
-User Input → Frontend Validation → API Request → Azure Function → ML Model → JSON Response → UI Update
+User Input → Frontend (Static Web App) → Direct API Call → Azure Functions App → ML Model + XAI Analysis → JSON Response → UI Update
 ```
 
 ### Core Components
 
-1. **Frontend**: HTML5 + JavaScript (Azure Static Web App)
-2. **Backend**: Azure Functions (Python 3.10)
-3. **ML Model**: Random Forest Classifier (scikit-learn)
-4. **Routing**: Azure Static Web Apps routing engine
+1. **Frontend**: HTML5 + JavaScript (### Expected API Contract (Plan A+ with XAI)
+
+### Request Format
+```json
+{
+    "features": [39.1, 18.7, 181, 3750]
+}
+```
+
+### Response Format
+```json
+{
+    "prediction": 0,
+    "species_name": "Adelie", 
+    "confidence": 0.52,
+    "features": [39.1, 18.7, 181, 3750],
+    "top_features": [
+        {"name": "culmen-length", "impact": 0.2654},
+        {"name": "flipper-length", "impact": -0.1852}
+    ],
+    "success": true
+}
+```p) - Static files only
+2. **Backend**: Dedicated Azure Functions App (Python 3.10) - Full ML library support
+3. **ML Model**: Random Forest Classifier + SHAP XAI (scikit-learn)
+4. **Architecture**: Decoupled services with direct API communication
 
 ## 📊 Implementation Details
 
 ### Frontend Processing (`static/app.js`)
 
-#### Data Collection & Normalization
+#### Data Collection & Processing (Plan A+)
 ```javascript
-// Critical: Model expects normalized features
+// Plan A+: Model expects raw features (no normalization in frontend)
 const payload = {
     features: [
         parseFloat(culmenLength),     // Raw mm (e.g., 39.1)
         parseFloat(culmenDepth),      // Raw mm (e.g., 18.7)
-        parseFloat(flipperLength)/10, // Normalized (181mm → 18.1)
-        parseFloat(bodyMass)/100      // Normalized (3750g → 37.5)
+        parseFloat(flipperLength),    // Raw mm (e.g., 181)
+        parseFloat(bodyMass)          // Raw grams (e.g., 3750)
     ]
 };
 ```
 
-#### API Communication
+#### API Communication (Plan A+)
 ```javascript
-fetch('/api/ClassifyPenguinSimple', {
+// Direct call to dedicated Functions App
+fetch('https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple', {
   method: 'POST',
   headers: {
+    'Content-Type': 'application/json',
+    'Origin': 'https://blue-wave-0b3a88b03.4.azurestaticapps.net'
+  },
+  body: JSON.stringify(payload)
+})
 .then(response => response.json())
 .then(data => {
-    // Handle prediction result
-    displayResult(data.species_name, data.confidence);
+    // Handle prediction result with XAI analysis
+    displayResult(data.species_name, data.confidence, data.top_features);
 });
 ```
 
@@ -82,56 +110,59 @@ def load_model():
     return _model
 ```
 
-##### Request Processing Pipeline
+##### Request Processing Pipeline (Plan A+ with XAI Integration)
 ```python
 @bp.route(route="ClassifyPenguinSimple", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def classify(req: func.HttpRequest) -> func.HttpResponse:
-    # 1. Handle CORS
+    # 1. Handle CORS for cross-origin requests from Static Web App
     headers = {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type"
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With"
     }
     
-    # Handle OPTIONS request for CORS preflight
-    if req.method == "OPTIONS":
-        return func.HttpResponse(status_code=204, headers=headers)
-    
-    # 2. Validate input
-    req_body = req.get_json()
+    # 2. Validate input (4 raw features)
     features = req_body.get('features', [])
     if len(features) != 4:
-        return func.HttpResponse("Invalid features", status_code=400)
+        return func.HttpResponse(json.dumps({"error": "Features array must contain exactly 4 values"}))
     
-    # 3. Make prediction
+    # 3. Make ML prediction
     model = load_model()
     prediction = int(model.predict([features])[0])
     confidence = float(max(model.predict_proba([features])[0]))
     
-    # 4. Format response
-    species_name = ['Adelie', 'Chinstrap', 'Gentoo'][prediction]
+    # 4. Call XAI function for feature importance
+    xai_url = get_xai_endpoint()
+    xai_response = requests.post(xai_url, json={
+        "new_features": features,
+        "predicted_class": prediction
+    }, timeout=30)
+    
+    top_features = []
+    if xai_response.status_code == 200:
+        xai_data = xai_response.json()
+        for name, impact in xai_data.get("feature_importance", {}).items():
+            top_features.append({"name": name, "impact": impact})
+    
+    # 5. Format combined response
     return func.HttpResponse(json.dumps({
         "prediction": prediction,
         "species_name": species_name,
         "confidence": confidence,
+        "top_features": top_features,
         "success": True
     }), headers=headers)
 ```
 
-### Azure Static Web Apps Routing (`staticwebapp.config.json`)
+### Static Web App Configuration (Plan A+)
 
 ```json
 {
-  "routes": [
-    {
-      "route": "/api/ClassifyPenguinSimple",
-      "methods": ["POST"],
-      "allowedRoles": ["anonymous"]
-    }
-  ]
+  "routes": []
 }
 ```
 
-**Purpose**: Routes `/api/*` requests from the static web app to the Azure Functions backend.
+**Plan A+ Architecture**: No API routing configuration needed. The Static Web App serves only static files, with frontend JavaScript making direct calls to the dedicated Azure Functions App endpoints.
 
 ## 🔄 Function Lifecycle
 
@@ -153,9 +184,9 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 
 **Cross-Origin Resource Sharing (CORS)** is a security mechanism that controls how web pages can access resources from different domains.
 
-### Why CORS is Needed
-- **Static Web App URL**: `https://blue-wave-0b3a88b03.6.azurestaticapps.net`
-- **Function App URL**: `<Default-domain-name-here>`
+### Why CORS is Needed (Plan A+)
+- **Static Web App URL**: `https://blue-wave-0b3a88b03.4.azurestaticapps.net`
+- **Function App URL**: `https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net`
 - **Different domains**: Browsers block cross-origin requests by default
 
 ### CORS Implementation in Function Code
@@ -223,7 +254,7 @@ curl -X OPTIONS <Default-domain-name-here>/api/ClassifyPenguinSimple \
 **Add Specific Domain**
 ```bash
 # Add the Static Web App domain to allowed origins
-az functionapp cors add --name penguin-classifier-consumption --resource-group <resource-group-name-here> --allowed-origins https://blue-wave-0b3a88b03.6.azurestaticapps.net
+az functionapp cors add --name penguin-classifier-consumption --resource-group <resource-group-name-here> --allowed-origins https://blue-wave-0b3a88b03.4.azurestaticapps.net
 ```
 
 **Verify Configuration**
@@ -403,15 +434,15 @@ logging.info(f"Penguin classified: {species_name} with confidence {confidence}")
 
 ## 🧪 Testing
 
-### API Testing
+### API Testing (Plan A+)
 ```bash
-# Test API through Static Web App routing
-curl -X POST https://blue-wave-0b3a88b03.6.azurestaticapps.net/api/ClassifyPenguinSimple \
+# Test API through direct Functions App call
+curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
-  -d '{"features": [39.1, 18.7, 18.1, 37.5]}'
+  -d '{"features": [39.1, 18.7, 181, 3750]}'
 
-# Expected response:
-{"prediction": 0, "species_name": "Adelie", "confidence": 0.98, "success": true}
+# Expected response with XAI:
+{"prediction": 0, "species_name": "Adelie", "confidence": 0.52, "top_features": [{"name": "culmen-length", "impact": 0.2654}], "success": true}
 ```
 
 ### Web Interface Testing
