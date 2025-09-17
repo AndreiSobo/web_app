@@ -15,13 +15,14 @@ This project demonstrates end-to-end machine learning deployment using Azure clo
 ### **Key Features**
 - **Real-time ML Predictions**: Instant species classification from penguin measurements
 - **Explainable AI**: SHAP-based feature importance analysis showing prediction reasoning
+- **Visual Force Plots**: Interactive charts showing which input values have the largest impact on predictions
 - **Architecture**: Decoupled Static Web App frontend + dedicated Functions App backend
 - **Interactive Web Interface**: User-friendly form with immediate results and XAI insights
 - **Enterprise-Grade API**: RESTful endpoints with full ML and XAI capabilities
 
 ### **Input & Output**
 - **Input**: Culmen length, culmen depth, flipper length, body mass (in mm/grams)
-- **Output**: Species classification with confidence score, feature importance analysis, and SHAP explanations
+- **Output**: Species classification with confidence score, feature importance analysis, SHAP explanations, and interactive force plots showing which input values most influenced the prediction
 
 ## 🏗️ **How It Works - Technical Implementation**
 
