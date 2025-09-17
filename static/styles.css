@@ -440,7 +440,8 @@ h1 {
     align-items: center;
     transition: var(--transition);
     border-bottom: 1px solid #e0e0e0;
-    min-height: 48px; /* Touch target minimum */
+    min-height: 48px;
+    /* Touch target minimum */
 }
 
 .xai-card-header:hover {
@@ -533,15 +534,15 @@ h1 {
     .xai-card-header {
         padding: 0.75rem;
     }
-    
+
     .xai-card-body {
         padding: 0.75rem;
     }
-    
+
     .xai-card-title {
         font-size: 0.9rem;
     }
-    
+
     .xai-explanation {
         font-size: 0.9rem;
     }
@@ -552,19 +553,19 @@ h1 {
     .xai-card {
         margin-top: 1.5rem;
     }
-    
+
     .xai-card-header {
         padding: 1.25rem 1.5rem;
     }
-    
+
     .xai-card-body {
         padding: 1.5rem;
     }
-    
+
     .xai-card-title {
         font-size: 1.1rem;
     }
-    
+
     .xai-explanation {
         font-size: 1rem;
     }
@@ -645,7 +646,8 @@ h1 {
     align-items: center;
     transition: var(--transition);
     border-bottom: 1px solid #e0e0e0;
-    min-height: 48px; /* Touch target minimum */
+    min-height: 48px;
+    /* Touch target minimum */
 }
 
 .info-card-header:hover {
@@ -731,15 +733,15 @@ h1 {
         flex: 1;
     }
     */
-    
+
     .info-card-header {
         padding: 1.25rem;
     }
-    
+
     .info-card-body {
         padding: 1.75rem;
     }
-    
+
     .info-card-title {
         font-size: 1.2rem;
     }
@@ -750,11 +752,11 @@ h1 {
     .info-card-header {
         padding: 0.75rem;
     }
-    
+
     .info-card-body {
         padding: 1rem;
     }
-    
+
     .info-card-title {
         font-size: 1rem;
     }
@@ -766,16 +768,16 @@ h1 {
         background-color: #2c2c2c;
         border-color: #555;
     }
-    
+
     .info-card-header {
         background: linear-gradient(135deg, #3c3c3c, #4a4a4a);
     }
-    
+
     .info-card-body {
         background-color: #2c2c2c;
         color: #e0e0e0;
     }
-    
+
     .info-card-body p {
         color: #d0d0d0;
     }

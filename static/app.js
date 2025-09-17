@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (hasXAIData) {
             // Use real XAI data from backend
             const topFeatures = data.top_features;
-            
+
             xaiContent = `
                 <!-- Explainable AI Card with Real Data -->
                 <div class="xai-card mt-3" id="xai-card">
