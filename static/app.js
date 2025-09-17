@@ -60,10 +60,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log('Sending request payload:', payload);
 
-        // API Configuration - Use relative URLs for better deployment flexibility
+        // API Configuration - Point to dedicated Azure Functions App
         const API_CONFIG = {
-            classify: '/api/ClassifyPenguinSimple',  // Routes through Static Web Apps
-            xai: '/api/XAI'  // Direct XAI endpoint for potential future use
+            classify: 'https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple',
+            xai: 'https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/XAI'
         };
 
         // In production, this would be the actual API call
