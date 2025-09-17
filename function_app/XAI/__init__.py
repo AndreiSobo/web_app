@@ -85,9 +85,9 @@ def xai(req: func.HttpRequest) -> func.HttpResponse:
                 headers=headers,
                 mimetype="application/json"
             )
-        if not predicted_class or predicted_class == -1:
+        if predicted_class is None or predicted_class == -1 or predicted_class < 0 or predicted_class > 2:
             return func.HttpResponse(
-                json.dumps({'error': 'predicted class returned -1'}),
+                json.dumps({'error': f'predicted class invalid: {predicted_class}. Must be 0, 1, or 2'}),
                 status_code=400,
                 headers=headers,
                 mimetype='application/json'
@@ -129,7 +129,7 @@ def xai(req: func.HttpRequest) -> func.HttpResponse:
         feature_importance = list(zip(penguin_features, values))
 
         # sort by absolute value impact
-        sorted_features = sorted(feature_importance, key=lambda x: abs(x[1], reverse=True))
+        sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
 
         # top 2
         feat_imp_dict = {}
