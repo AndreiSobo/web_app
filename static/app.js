@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (hasXAIData) {
             // Use real XAI data from backend
             const topFeatures = data.top_features;
+            const hasForceplot = data.force_plot_string && data.force_plot_string.startsWith('data:image/png;base64,');
 
             xaiContent = `
                 <!-- Explainable AI Card with Real Data -->
@@ -175,6 +176,36 @@ document.addEventListener('DOMContentLoaded', function () {
                             <li><strong>${topFeatures[1].name}:</strong> Impact score of <strong>${topFeatures[1].impact > 0 ? '+' : ''}${topFeatures[1].impact.toFixed(4)}</strong></li>
                         </ul>
                         <p><strong>Interpretation:</strong> Positive values increase the likelihood of this species, while negative values decrease it. Final confidence score: <strong>${(confidence * 100).toFixed(2)}%</strong>.</p>
+                        
+                        <!-- SHAP Force Plot Section -->
+                        <div class="xai-plot-container">
+                            <h6>🎯 SHAP Force Plot</h6>
+                            <div class="xai-plot-loading" id="xai-plot-loading" style="display: none;">
+                                <div class="xai-plot-spinner"></div>
+                                <p>Generating force plot visualization...</p>
+                            </div>
+                            <div class="xai-plot-content" id="xai-plot-content">
+                                ${hasForceplot ? `
+                                    <img src="${data.force_plot_string}" 
+                                         alt="SHAP Force Plot showing feature contributions" 
+                                         class="xai-plot-image" 
+                                         id="xai-plot-image"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Click to view force plot in full screen"
+                                         title="Click to view full screen">
+                                    <p class="xai-plot-caption">
+                                        <small>💡 This force plot shows how each feature pushes the prediction towards different species. Click the plot to view full screen.</small>
+                                    </p>
+                                ` : `
+                                    <div class="xai-plot-error" id="xai-plot-error">
+                                        <div class="xai-plot-error-icon">⚠️</div>
+                                        <p><strong>Force Plot Unavailable</strong></p>
+                                        <p class="text-muted">The SHAP force plot could not be generated for this prediction.</p>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -206,6 +237,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     toggleXAICard();
                 }
             });
+        }
+
+        // Add event listeners for force plot full-screen interaction
+        const forcePlotImage = document.getElementById('xai-plot-image');
+        if (forcePlotImage) {
+            // Click/tap to open full screen
+            forcePlotImage.addEventListener('click', openForceplotFullscreen);
+
+            // Keyboard accessibility
+            forcePlotImage.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openForceplotFullscreen();
+                }
+            });
+
+            // Touch feedback for mobile
+            if (isTouchDevice) {
+                forcePlotImage.addEventListener('touchstart', function () {
+                    this.style.transform = 'scale(0.98)';
+                }, { passive: true });
+
+                forcePlotImage.addEventListener('touchend', function () {
+                    this.style.transform = 'scale(1)';
+                }, { passive: true });
+            }
         }
 
         resetFormState();
@@ -291,6 +348,82 @@ function toggleXAICard() {
         xaiBody.style.display = 'none';
         xaiArrow.textContent = '▼';
         xaiArrow.setAttribute('aria-label', 'Expand explanation');
+    }
+}
+
+// Function to open force plot in full screen
+function openForceplotFullscreen() {
+    const forcePlotImage = document.getElementById('xai-plot-image');
+    if (!forcePlotImage || !forcePlotImage.src) return;
+
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'xai-plot-modal';
+    modal.innerHTML = `
+        <div class="xai-plot-modal-content">
+            <div class="xai-plot-modal-header">
+                <h3>SHAP Force Plot - Full Screen View</h3>
+                <button class="xai-plot-modal-close" id="modal-close" aria-label="Close full screen view">×</button>
+            </div>
+            <div class="xai-plot-modal-body">
+                <img src="${forcePlotImage.src}" alt="SHAP Force Plot - Full Screen" class="xai-plot-modal-image">
+                <p class="xai-plot-modal-caption">
+                    This force plot shows how each feature contributed to the prediction. Red areas push towards one species, blue areas push towards another.
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Add modal to document
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+    // Focus management for accessibility
+    const closeButton = modal.querySelector('#modal-close');
+    closeButton.focus();
+
+    // Event listeners for closing modal
+    const closeModal = function () {
+        document.body.removeChild(modal);
+        document.body.style.overflow = ''; // Restore scrolling
+        forcePlotImage.focus(); // Return focus to original image
+    };
+
+    // Close button click
+    closeButton.addEventListener('click', closeModal);
+
+    // ESC key to close
+    const handleKeyDown = function (e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Click outside modal to close
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            closeModal();
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+    });
+
+    // Prevent modal content clicks from closing modal
+    modal.querySelector('.xai-plot-modal-content').addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+
+    // Add touch feedback for mobile close button
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+        closeButton.addEventListener('touchstart', function () {
+            this.style.opacity = '0.7';
+        }, { passive: true });
+
+        closeButton.addEventListener('touchend', function () {
+            this.style.opacity = '1';
+        }, { passive: true });
     }
 }
 

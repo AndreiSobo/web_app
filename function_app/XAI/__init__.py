@@ -9,6 +9,10 @@ import numpy as np
 
 import shap
 import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import base64
+import io
 
 bp = func.Blueprint()
 
@@ -46,6 +50,33 @@ def load_background():
             logging.exception(f"Error loading background object")
             raise
     return _background
+
+def create_force_plot(explainer, shap_val, new_input, predicted_class,penguin_features):
+    
+    # initialise a figure
+    plt.figure(figsize=(12,3))
+
+    # create the force plot
+    shap.plots.force(
+        explainer.expected_value[predicted_class],
+        shap_val.values[0, :, predicted_class],
+        new_input[0],
+        feature_names = penguin_features,
+        matplotlib = True,
+        show = False
+    )
+
+    # convert to base 64 using the library
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight', dpi=150, facecolor='white')
+    buffer.seek(0)
+    
+    # Encode to base64
+    plot_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    plt.close()  # Important: close to free memory
+    
+    return f"data:image/png;base64,{plot_base64}"
+    
 
 @bp.route(route="XAI", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def xai(req: func.HttpRequest) -> func.HttpResponse:
@@ -113,15 +144,8 @@ def xai(req: func.HttpRequest) -> func.HttpResponse:
         shap_values = explainer(new_input)
         
 
-        # creating force_plot - decide later how this can be saved, then sent to frontend
-
-        # shap.initjs()
-        # shap.plots.force(
-        #     explainer.expected_value[predicted_class],
-        #     shap_values.values[0, :, predicted_class],
-        #     new_input[0],
-        #     feature_names = penguin_features
-        # )
+        # creating force_plot
+        force_plot_string = create_force_plot(explainer=explainer, shap_val=shap_values, new_input=new_input, predicted_class=predicted_class, penguin_features=penguin_features)
 
         values = shap_values.values[0, :, predicted_class]
 
@@ -138,7 +162,8 @@ def xai(req: func.HttpRequest) -> func.HttpResponse:
             feat_imp_dict[name] = round(value, 4)
 
         classify_payload = {
-            "feature_importance": feat_imp_dict
+            "feature_importance": feat_imp_dict,
+            "force_plot_string": force_plot_string
         }
 
 

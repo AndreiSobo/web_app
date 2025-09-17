@@ -1,11 +1,9 @@
 # 🔬 Technical Deep Dive: Penguin Species Classifier
 
 
-```
+##  System Architecture Overview
 
-## �🏗️ System Architecture Overview
-
-### High-Level Data Flow (Plan A+ Architecture)
+### High-Level Data Flow
 
 ```
 User Input → Frontend (Static Web App) → Direct API Call → Azure Functions App → ML Model + XAI Analysis → JSON Response → UI Update
@@ -13,7 +11,7 @@ User Input → Frontend (Static Web App) → Direct API Call → Azure Functions
 
 ### Core Components
 
-1. **Frontend**: HTML5 + JavaScript (### Expected API Contract (Plan A+ with XAI)
+1. **Frontend**: HTML5 + JavaScript 
 
 ### Request Format
 ```json
@@ -35,7 +33,8 @@ User Input → Frontend (Static Web App) → Direct API Call → Azure Functions
     ],
     "success": true
 }
-```p) - Static files only
+```
+
 2. **Backend**: Dedicated Azure Functions App (Python 3.10) - Full ML library support
 3. **ML Model**: Random Forest Classifier + SHAP XAI (scikit-learn)
 4. **Architecture**: Decoupled services with direct API communication
@@ -60,7 +59,7 @@ const payload = {
 #### API Communication (Plan A+)
 ```javascript
 // Direct call to dedicated Functions App
-fetch('https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple', {
+fetch('default-domain-url-here/api/ClassifyPenguinSimple', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -110,7 +109,7 @@ def load_model():
     return _model
 ```
 
-##### Request Processing Pipeline (Plan A+ with XAI Integration)
+##### Request Processing Pipeline
 ```python
 @bp.route(route="ClassifyPenguinSimple", methods=["GET", "POST", "OPTIONS"], auth_level=func.AuthLevel.ANONYMOUS)
 def classify(req: func.HttpRequest) -> func.HttpResponse:
@@ -154,7 +153,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
     }), headers=headers)
 ```
 
-### Static Web App Configuration (Plan A+)
+### Static Web App Configuration
 
 ```json
 {
@@ -162,7 +161,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 }
 ```
 
-**Plan A+ Architecture**: No API routing configuration needed. The Static Web App serves only static files, with frontend JavaScript making direct calls to the dedicated Azure Functions App endpoints.
+** API-free Architecture**: No API routing configuration needed. The Static Web App serves only static files, with frontend JavaScript making direct calls to the dedicated Azure Functions App endpoints.
 
 ## 🔄 Function Lifecycle
 
@@ -182,12 +181,12 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 
 ## 🌐 CORS Configuration and Troubleshooting
 
-**Cross-Origin Resource Sharing (CORS)** is a security mechanism that controls how web pages can access resources from different domains.
 
-### Why CORS is Needed (Plan A+)
-- **Static Web App URL**: `https://blue-wave-0b3a88b03.4.azurestaticapps.net`
-- **Function App URL**: `https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net`
-- **Different domains**: Browsers block cross-origin requests by default
+
+### Why CORS is Needed 
+
+**Cross-Origin Resource Sharing (CORS)** is a security mechanism that controls how web pages can access resources from different domains. Browsers block cross-origin requests by default.
+
 
 ### CORS Implementation in Function Code
 ```python
@@ -367,34 +366,6 @@ const endpoint = 'http://localhost:7071/api/ClassifyPenguinSimple';
 const endpoint = '/api/ClassifyPenguinSimple';  // Routes through Static Web Apps
 ```
 
-## 📊 Expected API Contract
-
-### Request Format
-```json
-{
-    "features": [39.1, 18.7, 18.1, 37.5]
-}
-```
-
-### Response Format
-```json
-{
-    "prediction": 0,
-    "species_name": "Adelie", 
-    "confidence": 0.98,
-    "features": [39.1, 18.7, 18.1, 37.5],
-    "success": true
-}
-```
-
-### Error Response
-```json
-{
-    "error": "Features array must contain exactly 4 values",
-    "message": "Classification failed",
-    "success": false
-}
-```
 
 ## 📈 Monitoring with Application Insights
 
@@ -419,11 +390,6 @@ const endpoint = '/api/ClassifyPenguinSimple';  // Routes through Static Web App
 3. **User Analytics**: Can track unique users if custom telemetry is added
 4. **Dependencies**: Monitor calls to external services
 
-### Accessing Metrics
-1. Go to Azure Portal → Your Function App → Application Insights
-2. View "Live Metrics Stream" for real-time monitoring
-3. Use "Analytics" to query custom metrics
-4. Set up "Alerts" for error thresholds
 
 ### Custom Tracking Example
 ```python
@@ -434,10 +400,10 @@ logging.info(f"Penguin classified: {species_name} with confidence {confidence}")
 
 ## 🧪 Testing
 
-### API Testing (Plan A+)
+### API Testing
 ```bash
 # Test API through direct Functions App call
-curl -X POST https://penguin-classifier-consumption-dngqgqbga0g2eqgy.northeurope-01.azurewebsites.net/api/ClassifyPenguinSimple \
+curl -X POST azure-function-default-domain-name/api/ClassifyPenguinSimple \
   -H "Content-Type: application/json" \
   -d '{"features": [39.1, 18.7, 181, 3750]}'
 
@@ -541,27 +507,6 @@ func azure functionapp publish penguin-classifier-consumption
 5. **Configuration**: Applies function app settings and triggers
 6. **Activation**: Restarts the function app with new code
 
-##### Deployment Process Breakdown
-```bash
-# 1. Site Publishing Info Retrieval
-Getting site publishing info...
-
-# 2. Remote Build Initiation  
-Performing remote build for functions project.
-Running oryx build... # Azure's build system
-
-# 3. Python Environment Setup
-Python Version: /tmp/oryx/platforms/python/3.10.4/bin/python3.10
-Running pip install... # Installs from requirements.txt
-
-# 4. Package Creation
-Creating a squashfs file # Compressed filesystem for Linux consumption
-
-# 5. Function Registration
-Syncing triggers...
-Functions in penguin-classifier-consumption:
-    classify - [httpTrigger]
-```
 
 #### Key Advantages of Azure CLI Deployment
 
@@ -585,7 +530,7 @@ Functions in penguin-classifier-consumption:
 
 ### Model Improvements
 - **Periodic Model Retraining**: Automated pipeline to retrain with new penguin data on Azure ML. The new penguin data can be inputs from users: examples they search for. To ensure the data is coherent, only the data that provide a 90+ confidence score should be added.
-- **Explainable AI Features**: Interactive model card, training process visualization, performance metrics dashboard
+
 
 ### Production Features
 - **API Authentication**: JWT tokens, rate limiting, user management
@@ -593,28 +538,8 @@ Functions in penguin-classifier-consumption:
 
 ## 🎯 Implementation Pattern Summary
 
-This architecture demonstrates:
-1. **Serverless ML Deployment**: No infrastructure management
-2. **Model Caching**: Performance optimization for repeated requests
-3. **Static Web App Integration**: Seamless frontend-backend communication
-4. **Cost-Effective Scaling**: Pay-per-use pricing model
-5. **Modern Web Standards**: CORS handling, REST API design
 
 ## 📖 Conclusion
 
-This penguin species classifier demonstrates a complete modern web application architecture, combining machine learning, cloud computing, and responsive web design. The system showcases:
-
-- **Technical Excellence**: Production-ready code with comprehensive error handling
-- **Scalable Architecture**: Serverless design that scales automatically
-- **User Experience**: Mobile-responsive interface with intuitive interactions
-- **Cost Efficiency**: Pay-per-use model with predictable costs
-- **Maintainability**: Clean code structure with comprehensive documentation
-
-**Performance Metrics:**
-- **Response Time**: <~15 seconds for cold start, less than 1 second for warm start 
-- **Prediction Accuracy**: >97% on test dataset
-- **Deployment Cost**: Currently within the free consumption plan. Can scale to $5 monthly.
-- **Scalability**: Supports thousands of concurrent users
-- **Availability**: 99.9% uptime Service Level Agreement
-
+This penguin species classifier demonstrates a complete modern web application architecture, combining machine learning, cloud computing, and responsive web design.
 This project showcases the integration of modern web technologies, cloud infrastructure, and machine learning to create a production-ready application.
