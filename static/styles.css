@@ -455,7 +455,7 @@ h1 {
 .xai-card-title {
     font-weight: 600;
     color: var(--primary-color);
-    font-size: 1rem;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -471,21 +471,36 @@ h1 {
 
 /* XAI Card Body - Collapsible content */
 .xai-card-body {
-    padding: 1rem;
+    padding: 1.5rem;
     background: white;
     border-top: 1px solid #f0f0f0;
 }
 
-/* XAI Explanation Text */
-.xai-explanation {
+/* XAI Body Content Styles - Match info cards */
+.xai-card-body h6 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.xai-card-body p {
     font-size: 0.95rem;
     line-height: 1.6;
     color: var(--dark-gray);
-    margin-bottom: 1.5rem;
-    text-align: justify;
+    margin-bottom: 1rem;
 }
 
-.xai-explanation strong {
+.xai-card-body ul {
+    margin-bottom: 1rem;
+}
+
+.xai-card-body li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.xai-card-body strong {
     color: var(--primary-color);
     font-weight: 600;
 }

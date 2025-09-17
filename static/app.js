@@ -158,14 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (hasXAIData) {
             // Use real XAI data from backend
             const topFeatures = data.top_features;
-            const xaiExplanation = `
-                The model analyzed your penguin's features using SHAP (SHapley Additive exPlanations) values. 
-                The 2 most influential features for this <strong>${speciesName}</strong> prediction are: 
-                <strong>${topFeatures[0].name}</strong> (impact: <strong>${topFeatures[0].impact > 0 ? '+' : ''}${topFeatures[0].impact.toFixed(4)}</strong>) 
-                and <strong>${topFeatures[1].name}</strong> (impact: <strong>${topFeatures[1].impact > 0 ? '+' : ''}${topFeatures[1].impact.toFixed(4)}</strong>). 
-                Positive values increase the likelihood of this species, while negative values decrease it.
-            `;
-
+            
             xaiContent = `
                 <!-- Explainable AI Card with Real Data -->
                 <div class="xai-card mt-3" id="xai-card">
@@ -174,10 +167,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="xai-card-arrow" id="xai-arrow">▼</span>
                     </div>
                     <div class="xai-card-body" id="xai-body" style="display: none;">
-                        <p class="xai-explanation">
-                            ${xaiExplanation}
-                            Final confidence score: <strong>${(confidence * 100).toFixed(2)}%</strong>.
-                        </p>
+                        <h6>Why This Prediction?</h6>
+                        <p>The model analyzed your penguin's features using <strong>SHAP (SHapley Additive exPlanations)</strong> values to explain this <strong>${speciesName}</strong> prediction.</p>
+                        <p><strong>Top 2 Most Influential Features:</strong></p>
+                        <ul>
+                            <li><strong>${topFeatures[0].name}:</strong> Impact score of <strong>${topFeatures[0].impact > 0 ? '+' : ''}${topFeatures[0].impact.toFixed(4)}</strong></li>
+                            <li><strong>${topFeatures[1].name}:</strong> Impact score of <strong>${topFeatures[1].impact > 0 ? '+' : ''}${topFeatures[1].impact.toFixed(4)}</strong></li>
+                        </ul>
+                        <p><strong>Interpretation:</strong> Positive values increase the likelihood of this species, while negative values decrease it. Final confidence score: <strong>${(confidence * 100).toFixed(2)}%</strong>.</p>
                     </div>
                 </div>
             `;
