@@ -31,13 +31,15 @@ User Input → Frontend (Static Web App) → Direct API Call → Azure Functions
         {"name": "culmen-length", "impact": 0.2654},
         {"name": "flipper-length", "impact": -0.1852}
     ],
+    "force_plot_string": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA...",
     "success": true
 }
 ```
 
 2. **Backend**: Dedicated Azure Functions App (Python 3.10) - Full ML library support
 3. **ML Model**: Random Forest Classifier + SHAP XAI (scikit-learn)
-4. **Architecture**: Decoupled services with direct API communication
+4. **XAI Visualization**: SHAP force plots generated server-side and encoded as base64 strings
+5. **Architecture**: Decoupled services with direct API communication
 
 ## 📊 Implementation Details
 
@@ -130,7 +132,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
     prediction = int(model.predict([features])[0])
     confidence = float(max(model.predict_proba([features])[0]))
     
-    # 4. Call XAI function for feature importance
+    # 4. Call XAI function for feature importance and force plot
     xai_url = get_xai_endpoint()
     xai_response = requests.post(xai_url, json={
         "new_features": features,
@@ -138,10 +140,13 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
     }, timeout=30)
     
     top_features = []
+    force_plot_string = ""
     if xai_response.status_code == 200:
         xai_data = xai_response.json()
         for name, impact in xai_data.get("feature_importance", {}).items():
             top_features.append({"name": name, "impact": impact})
+        # Extract base64-encoded SHAP force plot
+        force_plot_string = xai_data.get("force_plot_string", "")
     
     # 5. Format combined response
     return func.HttpResponse(json.dumps({
@@ -149,6 +154,7 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
         "species_name": species_name,
         "confidence": confidence,
         "top_features": top_features,
+        "force_plot_string": force_plot_string,
         "success": True
     }), headers=headers)
 ```
@@ -178,6 +184,37 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
 4. **Response**: Return JSON result (~10ms)
 
 **Note**: Function instances hibernate after ~5 minutes of inactivity (platform managed, not controlled by `functionTimeout` setting which only affects individual request execution time).
+
+## 📊 SHAP Force Plot Implementation
+
+### Force Plot Generation (`function_app/XAI/__init__.py`)
+```python
+def create_force_plot(explainer, shap_values, new_data, prediction_index):
+    # Generate force plot using SHAP
+    force_plot = shap.force_plot(
+        explainer.expected_value[prediction_index],
+        shap_values[prediction_index],
+        new_data,
+        matplotlib=True,
+        show=False
+    )
+    
+    # Convert matplotlib figure to PNG and encode as base64
+    buffer = io.BytesIO()
+    force_plot.savefig(buffer, format='png', bbox_inches='tight', dpi=150)
+    buffer.seek(0)
+    
+    # Create base64 data URI for frontend consumption
+    image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return f"data:image/png;base64,{image_base64}"
+```
+
+### Frontend Integration
+The base64-encoded force plot is embedded directly in the XAI card and supports:
+- **Inline Display**: Shows within the explainable AI section
+- **Full-Screen View**: Click/tap to open in modal overlay
+- **Mobile Support**: Touch-optimized interactions and responsive sizing
+- **Error Handling**: Graceful fallback when plot generation fails
 
 ## 🌐 CORS Configuration and Troubleshooting
 
