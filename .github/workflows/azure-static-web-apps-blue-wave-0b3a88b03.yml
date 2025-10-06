@@ -31,6 +31,7 @@ jobs:
           app_location: "./static" # App source code path - FRONTEND ONLY
           api_location: "" # No API - functions deployed separately to dedicated Azure Functions App
           output_location: "" # Built app content directory - optional
+          skip_app_build: true
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
