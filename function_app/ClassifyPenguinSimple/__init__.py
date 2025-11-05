@@ -1,3 +1,4 @@
+
 import logging
 import json
 import os
@@ -9,6 +10,7 @@ import numpy as np
 import requests
 
 bp = func.Blueprint()
+
 
 # Global variable to cache the model
 _model: Optional[object] = None
@@ -75,18 +77,18 @@ def classify(req: func.HttpRequest) -> func.HttpResponse:
         
         # Load model
         model = load_model()
-        
+
         # Make prediction
         features_array = np.array([features])
-        prediction = int(model.predict(features_array)[0])
-        
+        prediction = int(model.predict(features_array)[0])  # type: ignore
+
         # Get probabilities if available
         try:
-            probabilities = model.predict_proba(features_array)[0]
+            probabilities = model.predict_proba(features_array)[0]  # type: ignore
             confidence = float(max(probabilities))
         except AttributeError:
             confidence = None
-        
+
         # Species mapping
         penguin_species = ['Adelie', 'Chinstrap', 'Gentoo']
         species_name = penguin_species[prediction]
